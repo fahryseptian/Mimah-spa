@@ -1,0 +1,6 @@
+{
+  "name": "Mimah Spa",
+  "description": "Layanan home service spa dan pijat profesional oleh Miftah & Mahira. Menghadirkan relaksasi premium langsung ke rumah Anda di wilayah Medan dan sekitarnya.",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,1 @@
+sed -i 's/import { PWAInstallButton } from '\''\.\/Common\/PWAInstallButton'\'';/import { PWAInstallButton } from '\''\.\/Common\/PWAInstallButton'\'';\nimport { supabase } from '\''..\/lib\/supabase'\'';/g' src/components/Navbar.tsx
