@@ -139,6 +139,7 @@ interface AppContextType {
   updateGlobalSettings: (settings: GlobalSettings) => void;
   awardPointsToCustomer: (phone: string, points: number) => void;
   logout: () => void;
+  isDbConnected: boolean;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -146,6 +147,7 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = React.useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [isDbConnected, setIsDbConnected] = useState(false);
   const [userRole, setUserRoleState] = useState<UserRole>(() => {
     const savedRole = localStorage.getItem('nsc_user_role');
     if (savedRole === 'admin' || savedRole === 'therapist' || savedRole === 'customer') {
@@ -196,6 +198,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   useEffect(() => {
     if (supabase) {
       supabase.auth.getSession().then(({ data: { session } }) => {
+        setIsDbConnected(true);
         setUser(session?.user ?? null);
         if (session?.user?.user_metadata?.role) {
           const mRole = session.user.user_metadata.role;
@@ -204,9 +207,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           }
         }
         setLoading(false);
+      }).catch(() => {
+        setIsDbConnected(false);
+        setLoading(false);
       });
 
       const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        setIsDbConnected(!!session);
         setUser(session?.user ?? null);
         if (session?.user?.user_metadata?.role) {
           const mRole = session.user.user_metadata.role;
@@ -218,6 +225,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
       return () => subscription.unsubscribe();
     } else {
+      setIsDbConnected(false);
       setLoading(false);
     }
   }, []);
@@ -1806,7 +1814,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         globalSettings,
         updateGlobalSettings,
         awardPointsToCustomer,
-        logout
+        logout,
+        isDbConnected
       }}
     >
       <Toaster richColors position="top-right" />

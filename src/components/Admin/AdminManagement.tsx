@@ -31,7 +31,8 @@ import {
   ArrowUpRight,
   Percent,
   LogOut,
-  User
+  User,
+  Zap
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { Therapist, TransportTariffConfig, Voucher } from '../../types';
@@ -40,6 +41,7 @@ import { AnalyticsDashboard } from './AnalyticsDashboard';
 import { FinanceDashboard } from './FinanceDashboard';
 import { CustomerCRM } from './CustomerCRM';
 import { GlobalSettings } from './GlobalSettings';
+import { UATSimulator } from './UATSimulator';
 import { DisputeCenter } from './DisputeCenter';
 import { MonitoringMap } from './MonitoringMap';
 import { BroadcastCenter } from './BroadcastCenter';
@@ -407,6 +409,7 @@ export const AdminManagement: React.FC = () => {
             { id: 'vouchers', label: 'Voucher', icon: Tag },
             { id: 'finance', label: 'Keuangan', icon: Coins },
             { id: 'settings', label: 'Pengaturan', icon: Settings },
+            { id: 'uat', label: 'Simulator UAT', icon: Zap },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -441,6 +444,10 @@ export const AdminManagement: React.FC = () => {
 
         {activeAdminTab === 'finance' && (
           <FinanceDashboard />
+        )}
+
+        {activeAdminTab === 'uat' && (
+          <UATSimulator />
         )}
 
         {activeAdminTab === 'crm' && (
