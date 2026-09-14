@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -10,7 +10,11 @@ import {
   Download,
   PieChart as PieChartIcon,
   BarChart as BarChartIcon,
-  Wallet
+  Wallet,
+  CheckCircle2,
+  Clock,
+  XCircle,
+  AlertCircle
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { 
@@ -31,17 +35,18 @@ import { formatRupiah } from '../../utils/formatters';
 import { useApp } from '../../context/AppContext';
 
 export const FinanceDashboard: React.FC = () => {
-  const { bookings, therapists } = useApp();
+  const { bookings, therapists, cashoutRequests, updateCashoutRequestStatus } = useApp();
+  const [cashoutFilter, setCashoutFilter] = useState<'all' | 'pending' | 'processed' | 'completed'>('all');
 
   const completedBookings = bookings.filter(b => b.status === 'completed');
   
   // Calculate revenue
   const totalRevenue = completedBookings.reduce((sum, b) => sum + b.totalAmount, 0);
   
-  // Calculate Therapist share (assuming avg 70% for simplicity in calc, though it varies per therapist)
+  // Calculate Therapist share
   const therapistShare = completedBookings.reduce((sum, b) => {
     const therapist = therapists.find(t => t.id === b.therapistId);
-    const rate = therapist?.commissionRate || 0.75;
+    const rate = therapist?.commissionRate || 0.70;
     return sum + (b.servicePrice * rate) + b.transportCost;
   }, 0);
 
@@ -55,8 +60,15 @@ export const FinanceDashboard: React.FC = () => {
     { day: '04 Sep', revenue: 4800000, profit: 1300000 },
     { day: '05 Sep', revenue: 6200000, profit: 1800000 },
     { day: '06 Sep', revenue: 7500000, profit: 2100000 },
-    { day: '07 Sep', revenue: totalRevenue / 10, profit: mimahGrossProfit / 10 },
+    { day: '07 Sep', revenue: totalRevenue / 10 || 4500000, profit: mimahGrossProfit / 10 || 1350000 },
   ];
+
+  const filteredCashouts = cashoutRequests.filter(r => {
+    if (cashoutFilter === 'all') return true;
+    return r.status === cashoutFilter;
+  });
+
+  const pendingCount = cashoutRequests.filter(r => r.status === 'pending').length;
 
   const categoryData = [
     { name: 'Traditional', value: 45, color: '#059669' },
@@ -199,51 +211,126 @@ export const FinanceDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Recent Payouts Section */}
+      {/* Cashout / Withdrawal Requests Management Section */}
       <div className="bg-white p-8 rounded-[2.5rem] border border-stone-100 shadow-premium space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
-            <h3 className="text-xl font-bold text-stone-900 font-serif-display">Pengeluaran & Pencairan Komisi</h3>
-            <p className="text-[10px] font-black text-stone-400 uppercase tracking-widest">Transaksi Terakhir</p>
+            <div className="flex items-center gap-2">
+              <h3 className="text-xl font-bold text-stone-900 font-serif-display">Permintaan Penarikan Komisi (Cashout)</h3>
+              {pendingCount > 0 && (
+                <span className="px-2.5 py-0.5 rounded-full bg-amber-500 text-stone-900 text-[10px] font-black animate-pulse">
+                  {pendingCount} Pending
+                </span>
+              )}
+            </div>
+            <p className="text-[10px] font-black text-stone-400 uppercase tracking-widest">Pencairan Dompet Mitra Terapis & Status Transfer</p>
           </div>
-          <button className="text-[10px] font-black text-emerald-700 uppercase tracking-widest hover:underline transition-all">Lihat Semua</button>
+
+          <div className="flex items-center gap-2 bg-stone-50 p-1.5 rounded-2xl border border-stone-200">
+            {(['all', 'pending', 'processed', 'completed'] as const).map(tab => (
+              <button
+                key={tab}
+                onClick={() => setCashoutFilter(tab)}
+                className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${
+                  cashoutFilter === tab
+                    ? 'bg-stone-900 text-white shadow-md'
+                    : 'text-stone-500 hover:text-stone-900 hover:bg-stone-100'
+                }`}
+              >
+                {tab === 'all' ? 'Semua' : tab === 'pending' ? 'Pending' : tab === 'processed' ? 'Diproses' : 'Selesai'}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="border-b border-stone-100">
-                <th className="pb-4 text-[10px] font-black text-stone-400 uppercase tracking-widest">Penerima</th>
-                <th className="pb-4 text-[10px] font-black text-stone-400 uppercase tracking-widest">Kategori</th>
-                <th className="pb-4 text-[10px] font-black text-stone-400 uppercase tracking-widest text-right">Jumlah</th>
-                <th className="pb-4 text-[10px] font-black text-stone-400 uppercase tracking-widest text-right">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-stone-50">
-              {[
-                { name: 'Siti Aminah', cat: 'Komisi Layanan', amount: 350000, status: 'completed' },
-                { name: 'Budi Santoso', cat: 'Komisi Layanan', amount: 480000, status: 'completed' },
-                { name: 'Vendor Laundry', cat: 'Operasional', amount: 1200000, status: 'pending' },
-                { name: 'Rina Sastrawati', cat: 'Komisi Layanan', amount: 250000, status: 'completed' },
-              ].map((tx, idx) => (
-                <tr key={idx} className="group hover:bg-stone-50 transition-colors">
-                  <td className="py-4">
-                    <div className="text-xs font-bold text-stone-900">{tx.name}</div>
-                    <div className="text-[9px] text-stone-400 font-medium">10 Sep 2026, 14:20</div>
-                  </td>
-                  <td className="py-4 text-[10px] font-black text-stone-500 uppercase">{tx.cat}</td>
-                  <td className="py-4 text-xs font-black text-stone-900 text-right">{formatRupiah(tx.amount)}</td>
-                  <td className="py-4 text-right">
-                    <span className={`px-2 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest ${
-                      tx.status === 'completed' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
-                    }`}>
-                      {tx.status}
-                    </span>
-                  </td>
+          {filteredCashouts.length === 0 ? (
+            <div className="text-center py-12 space-y-3 bg-stone-50/50 rounded-3xl border border-dashed border-stone-200">
+              <Wallet className="w-10 h-10 text-stone-300 mx-auto" />
+              <p className="text-xs font-bold text-stone-500">Belum ada permintaan penarikan komisi dalam kategori ini.</p>
+            </div>
+          ) : (
+            <table className="w-full text-left text-xs text-stone-700">
+              <thead>
+                <tr className="border-b border-stone-100 text-stone-400 font-black text-[9px] uppercase tracking-widest">
+                  <th className="py-4 px-4">Terapis</th>
+                  <th className="py-4 px-4">Bank / Rekening</th>
+                  <th className="py-4 px-4">Jumlah Penarikan</th>
+                  <th className="py-4 px-4">Waktu</th>
+                  <th className="py-4 px-4 text-center">Status</th>
+                  <th className="py-4 px-4 text-right">Aksi Admin</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-stone-100">
+                {filteredCashouts.map((req) => (
+                  <tr key={req.id} className="hover:bg-stone-50/50 transition-colors">
+                    <td className="py-4 px-4 font-bold text-stone-900">
+                      <div>{req.therapistName}</div>
+                      <div className="text-[9px] font-medium text-stone-400">ID: {req.therapistId}</div>
+                    </td>
+                    <td className="py-4 px-4 font-medium">
+                      <div className="font-bold text-stone-800">{req.paymentMethod}</div>
+                      <div className="text-stone-500 font-mono text-[11px]">{req.accountNo} ({req.accountName})</div>
+                    </td>
+                    <td className="py-4 px-4 font-black text-emerald-700 text-sm">
+                      {formatRupiah(req.amount)}
+                    </td>
+                    <td className="py-4 px-4 text-[10px] text-stone-500 font-semibold">
+                      {req.createdAt}
+                    </td>
+                    <td className="py-4 px-4 text-center">
+                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${
+                        req.status === 'completed'
+                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                          : req.status === 'processed'
+                          ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                          : req.status === 'rejected'
+                          ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                          : 'bg-amber-50 text-amber-700 border border-amber-200'
+                      }`}>
+                        {req.status === 'completed' && <CheckCircle2 className="w-3 h-3" />}
+                        {req.status === 'processed' && <Clock className="w-3 h-3 animate-spin" />}
+                        {req.status === 'rejected' && <XCircle className="w-3 h-3" />}
+                        {req.status === 'pending' && <AlertCircle className="w-3 h-3" />}
+                        {req.status}
+                      </span>
+                    </td>
+                    <td className="py-4 px-4 text-right">
+                      <div className="flex items-center justify-end gap-1.5">
+                        {req.status === 'pending' && (
+                          <button
+                            onClick={() => updateCashoutRequestStatus(req.id, 'processed')}
+                            className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all"
+                            title="Tandai Sedang Diproses"
+                          >
+                            Proses
+                          </button>
+                        )}
+                        {(req.status === 'pending' || req.status === 'processed') && (
+                          <button
+                            onClick={() => updateCashoutRequestStatus(req.id, 'completed')}
+                            className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[9px] font-black uppercase tracking-wider transition-all shadow-sm"
+                            title="Tandai Selesai / Ditransfer"
+                          >
+                            Selesai (Transfer)
+                          </button>
+                        )}
+                        {req.status !== 'rejected' && req.status !== 'completed' && (
+                          <button
+                            onClick={() => updateCashoutRequestStatus(req.id, 'rejected')}
+                            className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all"
+                            title="Tolak & Kembalikan Saldo"
+                          >
+                            Tolak
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
     </div>

@@ -115,11 +115,37 @@ CREATE TABLE IF NOT EXISTS vouchers (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 6. ROW LEVEL SECURITY (RLS) POLICIES
+-- 6. TABLE: CASHOUT_REQUESTS (Pencairan Komisi Terapis)
+CREATE TABLE IF NOT EXISTS cashout_requests (
+    id VARCHAR(50) PRIMARY KEY,
+    therapist_id VARCHAR(50) REFERENCES therapists(id),
+    therapist_name VARCHAR(100) NOT NULL,
+    amount INT NOT NULL,
+    payment_method VARCHAR(50) NOT NULL,
+    account_no VARCHAR(50) NOT NULL,
+    account_name VARCHAR(100) NOT NULL,
+    status VARCHAR(20) DEFAULT 'pending', -- 'pending', 'processed', 'completed', 'rejected'
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 7. PERFORMANCE INDEXING OPTIMIZATION
+CREATE INDEX IF NOT EXISTS idx_bookings_status ON bookings(status);
+CREATE INDEX IF NOT EXISTS idx_bookings_therapist_id ON bookings(therapist_id);
+CREATE INDEX IF NOT EXISTS idx_bookings_created_at ON bookings(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_bookings_date ON bookings(booking_date);
+
+CREATE INDEX IF NOT EXISTS idx_therapists_status ON therapists(status);
+CREATE INDEX IF NOT EXISTS idx_therapists_city ON therapists(base_city);
+
+CREATE INDEX IF NOT EXISTS idx_cashout_requests_status ON cashout_requests(status);
+CREATE INDEX IF NOT EXISTS idx_cashout_requests_therapist_id ON cashout_requests(therapist_id);
+
+-- 8. ROW LEVEL SECURITY (RLS) POLICIES
 ALTER TABLE therapists ENABLE ROW LEVEL SECURITY;
 ALTER TABLE services ENABLE ROW LEVEL SECURITY;
 ALTER TABLE bookings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE vouchers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE cashout_requests ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Public Read All" ON therapists FOR SELECT USING (true);
 CREATE POLICY "Public Manage All" ON therapists FOR ALL USING (true);
@@ -132,12 +158,16 @@ CREATE POLICY "Public Manage All Bookings" ON bookings FOR ALL USING (true);
 
 CREATE POLICY "Public Read Vouchers" ON vouchers FOR SELECT USING (true);
 
--- 7. ENABLE REALTIME BROADCAST
+CREATE POLICY "Public Read Cashouts" ON cashout_requests FOR SELECT USING (true);
+CREATE POLICY "Public Manage Cashouts" ON cashout_requests FOR ALL USING (true);
+
+-- 9. ENABLE REALTIME BROADCAST
 ALTER PUBLICATION supabase_realtime ADD TABLE bookings;
 ALTER PUBLICATION supabase_realtime ADD TABLE therapists;
 ALTER PUBLICATION supabase_realtime ADD TABLE services;
 ALTER PUBLICATION supabase_realtime ADD TABLE vouchers;
 ALTER PUBLICATION supabase_realtime ADD TABLE reviews;
+ALTER PUBLICATION supabase_realtime ADD TABLE cashout_requests;
 
 -- SEED DATA AWAL (Contoh)
 INSERT INTO services (id, title, category, duration_minutes, price, is_popular)

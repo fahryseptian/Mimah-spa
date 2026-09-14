@@ -345,7 +345,7 @@ export interface CashoutRequest {
   paymentMethod: string;
   accountNo: string;
   accountName: string;
-  status: 'pending' | 'completed' | 'rejected';
+  status: 'pending' | 'processed' | 'completed' | 'rejected';
   createdAt: string;
 }
 

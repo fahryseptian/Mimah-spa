@@ -104,6 +104,7 @@ export const AdminManagement: React.FC = () => {
   // Modal Add/Edit Therapist State
   const [isTherapistModalOpen, setIsTherapistModalOpen] = useState(false);
   const [editingTherapistId, setEditingTherapistId] = useState<string | null>(null);
+  const [therapistToDelete, setTherapistToDelete] = useState<Therapist | null>(null);
 
   // Form fields for Therapist
   const [formEmail, setFormEmail] = useState('');
@@ -618,16 +619,17 @@ export const AdminManagement: React.FC = () => {
                               value={t.commissionRate}
                               onChange={(e) => {
                                 updateTherapist(t.id, { commissionRate: parseFloat(e.target.value) });
-                                showToast(`Komisi ${t.name} disesuaikan ke ${parseFloat(e.target.value) * 100}%!`, 'success');
+                                showToast(`Komisi ${t.name} disesuaikan ke ${Math.round(parseFloat(e.target.value) * 100)}%!`, 'success');
                               }}
                               className="bg-stone-50 border border-stone-200 rounded-xl text-[11px] font-black text-stone-900 py-1.5 px-3 outline-none cursor-pointer hover:bg-stone-100 transition-colors"
                             >
-                              <option value="0.6">60% Mitra</option>
-                              <option value="0.7">70% Mitra</option>
-                              <option value="0.75">75% Mitra</option>
-                              <option value="0.8">80% Mitra</option>
-                              <option value="0.85">85% Mitra</option>
-                              <option value="0.9">90% Mitra</option>
+                              <option value="0.40">40% Mitra</option>
+                              <option value="0.45">45% Mitra</option>
+                              <option value="0.50">50% Mitra</option>
+                              <option value="0.55">55% Mitra</option>
+                              <option value="0.60">60% Mitra</option>
+                              <option value="0.65">65% Mitra</option>
+                              <option value="0.70">70% Mitra</option>
                             </select>
                           </td>
                           <td className="p-6 text-center">
@@ -659,11 +661,7 @@ export const AdminManagement: React.FC = () => {
                                 <Edit3 className="w-3.5 h-3.5" />
                               </button>
                               <button 
-                                onClick={() => {
-                                  if (window.confirm(`Hapus akun mitra ${t.name} dari sistem Mimah Spa?`)) {
-                                    deleteTherapist(t.id);
-                                  }
-                                }}
+                                onClick={() => setTherapistToDelete(t)}
                                 className="p-2.5 bg-stone-50 hover:bg-rose-50 text-rose-600 rounded-xl transition-all hover:scale-105 border border-stone-100"
                                 title="Hapus mitra"
                               >
@@ -1257,17 +1255,17 @@ export const AdminManagement: React.FC = () => {
                       <input 
                         type="number" 
                         step="1"
-                        min="10"
-                        max="95"
+                        min="40"
+                        max="70"
                         value={formCommission} 
                         onChange={(e) => setFormCommission(parseInt(e.target.value) || 0)} 
                         className="w-full bg-stone-50 border border-stone-100 rounded-2xl px-12 py-3.5 text-sm font-black text-emerald-700 outline-none focus:bg-white transition-all" 
-                        placeholder="70"
+                        placeholder="65"
                         required
                       />
                       <Percent className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-600" />
                     </div>
-                    <p className="text-[9px] text-stone-400 font-bold px-1 mt-1">Masukkan angka bulat (Misal: 70 = Bagi hasil 70% Mitra & 30% Platform)</p>
+                    <p className="text-[9px] text-stone-400 font-bold px-1 mt-1">Masukkan angka bulat antara 40 s.d. 70 (Bagi hasil 40% - 70% untuk Mitra & sisanya untuk Platform)</p>
                   </div>
                 </div>
 
@@ -1334,6 +1332,42 @@ export const AdminManagement: React.FC = () => {
               </div>
             </form>
           </motion.div>
+        </div>
+      )}
+
+      {/* Delete Therapist Confirmation Modal */}
+      {therapistToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl border border-stone-100 space-y-6">
+            <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto">
+              <Trash2 className="w-6 h-6" />
+            </div>
+            <div className="text-center space-y-2">
+              <h3 className="text-lg font-bold text-stone-900">Hapus Akun Mitra Terapis?</h3>
+              <p className="text-xs text-stone-500 leading-relaxed">
+                Anda akan menghapus <span className="font-bold text-stone-800">{therapistToDelete.name}</span> dari sistem Mimah Spa. Tindakan ini juga akan menghapus data terkait dari database.
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setTherapistToDelete(null)}
+                className="flex-1 py-3.5 px-4 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-2xl text-xs font-bold transition-all"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  deleteTherapist(therapistToDelete.id);
+                  setTherapistToDelete(null);
+                }}
+                className="flex-1 py-3.5 px-4 bg-rose-600 hover:bg-rose-700 text-white rounded-2xl text-xs font-bold transition-all shadow-lg shadow-rose-900/20"
+              >
+                Ya, Hapus Mitra
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
