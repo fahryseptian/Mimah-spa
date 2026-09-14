@@ -68,7 +68,7 @@ export const ServiceCatalog: React.FC = () => {
   };
 
   return (
-    <div className="space-y-10">
+    <div id="services" className="space-y-10 scroll-mt-24">
       {/* Section Header */}
       <div className="flex flex-col items-center text-center space-y-4 max-w-2xl mx-auto">
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-50 text-emerald-800 text-[10px] font-bold uppercase tracking-widest border border-emerald-100">

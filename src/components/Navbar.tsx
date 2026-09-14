@@ -47,6 +47,7 @@ export const Navbar: React.FC = () => {
 
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isCityDropdownOpen, setIsCityDropdownOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -200,19 +201,29 @@ export const Navbar: React.FC = () => {
 
                 {/* City Selector */}
                 <div className="relative group">
-                  <button className="flex items-center gap-2 px-5 py-2.5 bg-stone-50 hover:bg-stone-100 text-stone-700 rounded-2xl border border-stone-100 text-sm font-bold transition-all">
+                  <button 
+                    onClick={() => setIsCityDropdownOpen(!isCityDropdownOpen)}
+                    className="flex items-center gap-2 px-5 py-2.5 bg-stone-50 hover:bg-stone-100 text-stone-700 rounded-2xl border border-stone-100 text-sm font-bold transition-all cursor-pointer active:scale-95"
+                  >
                     <MapPin className="w-4 h-4 text-emerald-500" />
                     <span>{selectedCity}</span>
-                    <ChevronDown className="w-3.5 h-3.5 opacity-50 group-hover:rotate-180 transition-transform" />
+                    <ChevronDown className={`w-3.5 h-3.5 opacity-50 transition-transform ${isCityDropdownOpen ? 'rotate-180' : 'group-hover:rotate-180'}`} />
                   </button>
                   
-                  <div className="absolute right-0 top-full mt-3 w-64 bg-white rounded-3xl shadow-premium border border-stone-100 py-4 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all translate-y-2 group-hover:translate-y-0">
+                  <div className={`absolute right-0 top-full mt-3 w-64 bg-white rounded-3xl shadow-premium border border-stone-100 py-4 z-50 transition-all ${
+                    isCityDropdownOpen 
+                      ? 'opacity-100 visible translate-y-0' 
+                      : 'opacity-0 invisible group-hover:opacity-100 group-hover:visible translate-y-2 group-hover:translate-y-0'
+                  }`}>
                     <div className="px-5 py-2 text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2">Pilih Zona Layanan</div>
                     {cities.map((c) => (
                       <button
                         key={c.city}
-                        onClick={() => setSelectedCity(c.city)}
-                        className={`w-full text-left px-5 py-3 text-sm font-bold flex items-center justify-between hover:bg-emerald-50 transition-colors ${
+                        onClick={() => {
+                          setSelectedCity(c.city);
+                          setIsCityDropdownOpen(false);
+                        }}
+                        className={`w-full text-left px-5 py-3 text-sm font-bold flex items-center justify-between hover:bg-emerald-50 transition-colors cursor-pointer ${
                           selectedCity === c.city ? 'text-emerald-800 bg-emerald-50/50' : 'text-stone-600'
                         }`}
                       >

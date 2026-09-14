@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useApp } from '../context/AppContext';
-import { Lock, Mail, Key, CheckCircle2, ShieldAlert, Database } from 'lucide-react';
+import { Lock, Mail, Key, CheckCircle2, ShieldAlert, Database, User } from 'lucide-react';
 import { UserRole } from '../types';
 
 export const LoginPage: React.FC = () => {
@@ -169,6 +169,38 @@ export const LoginPage: React.FC = () => {
               )}
             </button>
           </form>
+
+          {/* Demo Access Section */}
+          <div className="pt-2 space-y-4 relative z-10">
+            <div className="flex items-center gap-3">
+              <div className="h-px flex-1 bg-stone-100" />
+              <span className="text-[10px] font-black text-stone-300 uppercase tracking-widest">Developer Access</span>
+              <div className="h-px flex-1 bg-stone-100" />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => {
+                  setUserRole('admin');
+                  showToast('Masuk sebagai Demo Admin (Bypass)', 'success');
+                }}
+                className="flex items-center justify-center gap-2 py-3 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all border border-emerald-100 shadow-sm"
+              >
+                <Lock className="w-3 h-3" />
+                Demo Admin
+              </button>
+              <button
+                onClick={() => {
+                  setUserRole('therapist');
+                  showToast('Masuk sebagai Demo Terapis (Bypass)', 'success');
+                }}
+                className="flex items-center justify-center gap-2 py-3 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all border border-amber-100 shadow-sm"
+              >
+                <User className="w-3 h-3" />
+                Demo Terapis
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Policy Footer */}

@@ -1,15 +1,39 @@
 import React from 'react';
 import { Share2, Gift, Copy, Check, Sparkles, UserPlus } from 'lucide-react';
 import { useState } from 'react';
+import { useApp } from '../../context/AppContext';
 
 export const ReferralBanner: React.FC = () => {
+  const { showToast } = useApp();
   const [copied, setCopied] = useState(false);
   const referralCode = 'MIMAH-RI78';
 
   const handleCopy = () => {
     navigator.clipboard.writeText(referralCode);
     setCopied(true);
+    showToast('Kode referral MIMAH-RI78 berhasil disalin!', 'success');
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleShare = async () => {
+    const shareData = {
+      title: 'Mimah Spa - Spa Panggilan Bintang Lima',
+      text: `Dapatkan diskon 10% di Mimah Spa dengan kode referal saya: ${referralCode}! Nikmati terapis wanita bersertifikat BNSP langsung ke rumah.`,
+      url: window.location.origin
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+        showToast('Berhasil membagikan tautan referral!', 'success');
+      } catch (err) {
+        console.log('Share dismissed:', err);
+      }
+    } else {
+      const waText = encodeURIComponent(`${shareData.text}\nKunjungi: ${shareData.url}`);
+      window.open(`https://api.whatsapp.com/send?text=${waText}`, '_blank');
+      showToast('Membuka WhatsApp untuk membagikan kode referral...', 'info');
+    }
   };
 
   return (
@@ -54,7 +78,10 @@ export const ReferralBanner: React.FC = () => {
                 {copied ? <Check className="w-5 h-5 text-emerald-600" /> : <Copy className="w-5 h-5" />}
                 <span>{copied ? 'Copied!' : 'Copy Code'}</span>
               </button>
-              <button className="flex-1 flex items-center justify-center gap-3 px-8 py-4 bg-emerald-600 text-white rounded-2xl text-sm font-bold hover:bg-emerald-500 transition-all active:scale-95 shadow-lg shadow-emerald-600/20">
+              <button 
+                onClick={handleShare}
+                className="flex-1 flex items-center justify-center gap-3 px-8 py-4 bg-emerald-600 text-white rounded-2xl text-sm font-bold hover:bg-emerald-500 transition-all active:scale-95 shadow-lg shadow-emerald-600/20 cursor-pointer"
+              >
                 <Share2 className="w-5 h-5" />
                 <span>Share Link</span>
               </button>

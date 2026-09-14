@@ -4,7 +4,7 @@ import { useApp } from '../../context/AppContext';
 import { motion, AnimatePresence } from 'motion/react';
 
 export const LoyaltyRewardsModal: React.FC = () => {
-  const { isLoyaltyModalOpen, setIsLoyaltyModalOpen, userPoints } = useApp();
+  const { isLoyaltyModalOpen, setIsLoyaltyModalOpen, userPoints, showToast } = useApp();
 
   if (!isLoyaltyModalOpen) return null;
 
@@ -108,9 +108,9 @@ export const LoyaltyRewardsModal: React.FC = () => {
                 type="button"
                 onClick={() => {
                   navigator.clipboard.writeText('MIMAH-MEDAN-88');
-                  alert('Kode Referral MIMAH-MEDAN-88 berhasil disalin!');
+                  showToast('Kode Referral MIMAH-MEDAN-88 berhasil disalin ke clipboard!', 'success');
                 }}
-                className="px-5 py-3 bg-stone-900 hover:bg-stone-800 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all"
+                className="px-5 py-3 bg-stone-900 hover:bg-stone-800 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer active:scale-95 shadow-md shadow-stone-900/10"
               >
                 Salin Kode
               </button>

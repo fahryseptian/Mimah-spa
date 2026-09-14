@@ -18,13 +18,15 @@ import {
   RotateCcw,
   CheckCircle,
   Users,
-  Car
+  Car,
+  ReceiptText
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { supabase } from '../../lib/supabase';
 import { BookingItem, BookingStatus } from '../../types';
 import { formatRupiah, getStatusBadge, generateWhatsAppBookingMessage, generateGoogleCalendarUrl } from '../../utils/formatters';
 import { APIProvider, Map, AdvancedMarker, Pin } from '@vis.gl/react-google-maps';
+import { InvoiceModal } from './InvoiceModal';
 
 export const BookingTracking: React.FC = () => {
   const { 
@@ -71,6 +73,7 @@ export const BookingTracking: React.FC = () => {
 
   const [ratingInput, setRatingInput] = useState<number>(5);
   const [commentInput, setCommentInput] = useState<string>('');
+  const [selectedInvoiceBooking, setSelectedInvoiceBooking] = useState<BookingItem | null>(null);
 
   const currentBooking = activeBooking || bookings[0];
 
@@ -175,6 +178,17 @@ export const BookingTracking: React.FC = () => {
             </div>
 
             <div className="relative z-10 flex flex-wrap items-center gap-3">
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setSelectedInvoiceBooking(currentBooking)}
+                className="px-5 py-4 bg-white/15 hover:bg-white/25 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest flex items-center gap-2.5 backdrop-blur-md border border-white/25 shadow-lg transition-all cursor-pointer"
+                title="Lihat E-Receipt & Rincian Faktur"
+              >
+                <ReceiptText className="w-4 h-4 text-emerald-400" />
+                <span>E-Receipt</span>
+              </motion.button>
+
               <motion.a
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
@@ -185,7 +199,7 @@ export const BookingTracking: React.FC = () => {
                 title="Tambah ke Google Calendar"
               >
                 <Calendar className="w-4 h-4 text-emerald-400" />
-                <span>+ Google Calendar</span>
+                <span>+ Calendar</span>
               </motion.a>
 
               <motion.a
@@ -197,7 +211,7 @@ export const BookingTracking: React.FC = () => {
                 className="px-6 py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest flex items-center gap-3 shadow-xl shadow-emerald-900/40 transition-all"
               >
                 <Send className="w-4 h-4" />
-                <span>Hubungi Admin/Terapis</span>
+                <span>Hubungi Admin</span>
               </motion.a>
             </div>
           </div>
@@ -596,6 +610,15 @@ export const BookingTracking: React.FC = () => {
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
+                        onClick={() => setSelectedInvoiceBooking(b)}
+                        className="p-3 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-xl transition-all"
+                        title="Lihat E-Receipt Faktur"
+                      >
+                        <ReceiptText className="w-4 h-4" />
+                      </motion.button>
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
                         onClick={() => setActiveBooking(b)}
                         className="px-5 py-3 bg-stone-900 hover:bg-stone-800 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-stone-200"
                       >
@@ -617,6 +640,13 @@ export const BookingTracking: React.FC = () => {
           </AnimatePresence>
         </div>
       </div>
+
+      {/* Official E-Receipt / Digital Invoice Modal */}
+      <InvoiceModal
+        booking={selectedInvoiceBooking}
+        isOpen={!!selectedInvoiceBooking}
+        onClose={() => setSelectedInvoiceBooking(null)}
+      />
     </div>
   );
 };

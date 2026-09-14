@@ -44,6 +44,7 @@ import { TermsModal } from './components/TermsModal';
 import { OfflineIndicator } from './components/Common/OfflineIndicator';
 import { ShareButton } from './components/Common/ShareButton';
 import { InstallPwaOverlay } from './components/Common/InstallPwaOverlay';
+import { StatusNotificationOverlay } from './components/Common/StatusNotificationOverlay';
 import { MapsWrapper } from './components/Maps/MapsWrapper';
 import { ServiceAreaMap } from './components/Maps/ServiceAreaMap';
 
@@ -258,11 +259,21 @@ VITE_SUPABASE_ANON_KEY=Masukkan_Anon_Key_Supabase_Anda`}
                     <div className="flex items-center gap-4 pt-2">
                       <button 
                         onClick={() => setIsBookingModalOpen(true)}
-                        className="px-6 py-3.5 rounded-2xl bg-emerald-700 text-white font-bold shadow-lg shadow-emerald-700/20 hover:bg-emerald-800 transition-all"
+                        className="px-6 py-3.5 rounded-2xl bg-emerald-700 text-white font-bold shadow-lg shadow-emerald-700/20 hover:bg-emerald-800 transition-all cursor-pointer active:scale-95"
                       >
                         Pesan Sekarang
                       </button>
-                      <button className="px-6 py-3.5 rounded-2xl bg-white text-stone-700 font-bold border border-stone-200 hover:bg-stone-50 transition-all">
+                      <button 
+                        onClick={() => {
+                          const el = document.getElementById('services');
+                          if (el) {
+                            el.scrollIntoView({ behavior: 'smooth' });
+                          } else {
+                            setActiveCustomerTab('katalog');
+                          }
+                        }}
+                        className="px-6 py-3.5 rounded-2xl bg-white text-stone-700 font-bold border border-stone-200 hover:bg-stone-50 hover:border-emerald-300 transition-all cursor-pointer shadow-sm active:scale-95"
+                      >
                         Lihat Layanan
                       </button>
                     </div>
@@ -424,7 +435,19 @@ VITE_SUPABASE_ANON_KEY=Masukkan_Anon_Key_Supabase_Anda`}
                 <ul className="space-y-4">
                   {['Pijat Tradisional', 'Refleksi Kaki', 'Deep Tissue Sport', 'Ibu Hamil & Bayi', 'Fisioterapi'].map((item) => (
                     <li key={item}>
-                      <button className="text-sm font-bold text-stone-600 hover:text-emerald-700 transition-colors">{item}</button>
+                      <button 
+                        onClick={() => {
+                          const el = document.getElementById('services');
+                          if (el) {
+                            el.scrollIntoView({ behavior: 'smooth' });
+                          } else {
+                            setActiveCustomerTab('katalog');
+                          }
+                        }}
+                        className="text-sm font-bold text-stone-600 hover:text-emerald-700 transition-colors cursor-pointer text-left"
+                      >
+                        {item}
+                      </button>
                     </li>
                   ))}
                 </ul>
@@ -499,6 +522,7 @@ VITE_SUPABASE_ANON_KEY=Masukkan_Anon_Key_Supabase_Anda`}
       <TermsModal isOpen={isTermsOpen} onClose={() => setIsTermsOpen(false)} defaultTab={termsTab} />
       <OfflineIndicator />
       <InstallPwaOverlay />
+      <StatusNotificationOverlay />
       <Toaster position="top-center" expand={true} richColors />
     </div>
   );

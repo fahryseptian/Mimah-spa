@@ -31,25 +31,25 @@ export const PushNotificationSwitch: React.FC = () => {
   };
 
   return (
-    <div className="bg-stone-800/80 p-3 sm:p-4 rounded-2xl border border-stone-100 shadow-soft flex items-center justify-between">
+    <div className="bg-white/5 backdrop-blur-xl p-4 rounded-[2rem] border border-white/10 flex items-center justify-between gap-4 transition-all hover:bg-white/10">
       <div className="flex items-center gap-3">
-        <div className={`p-2 rounded-xl ${permission === 'granted' ? 'bg-emerald-900/50 text-emerald-400' : 'bg-stone-700 text-stone-600'}`}>
-          {permission === 'granted' ? <BellRing className="w-5 h-5 animate-pulse" /> : <BellOff className="w-5 h-5" />}
+        <div className={`p-2.5 rounded-xl ${permission === 'granted' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-white/5 text-stone-500'}`}>
+          {permission === 'granted' ? <BellRing className="w-5 h-5" /> : <BellOff className="w-5 h-5" />}
         </div>
-        <div>
-          <div className="text-sm font-bold text-white">Notifikasi Pesanan Masuk</div>
-          <div className="text-[10px] sm:text-xs text-stone-600">
-            {permission === 'granted' ? 'Notifikasi aktif. Anda akan berdering saat ada order.' : 'Aktifkan notifikasi untuk order baru.'}
-          </div>
+        <div className="flex flex-col">
+          <span className="text-[11px] font-black text-white uppercase tracking-wider">Notifikasi Pesanan</span>
+          <span className="text-[10px] text-stone-400 leading-tight">
+            {permission === 'granted' ? 'Otomatis berdering' : 'Aktifkan agar order masuk'}
+          </span>
         </div>
       </div>
       <button
         onClick={requestPermission}
         disabled={permission === 'granted'}
-        className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-xs font-bold transition-all ${
+        className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
           permission === 'granted' 
-            ? 'bg-emerald-50/50 border border-emerald-800 text-emerald-500 cursor-default' 
-            : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-soft-hover shadow-emerald-900/20 active:scale-95 cursor-pointer'
+            ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' 
+            : 'bg-emerald-500 hover:bg-emerald-400 text-white shadow-lg shadow-emerald-500/20 active:scale-95'
         }`}
       >
         {permission === 'granted' ? 'Aktif' : 'Aktifkan'}

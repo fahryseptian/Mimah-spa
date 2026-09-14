@@ -22,4 +22,10 @@ export const getSupabase = () => {
   }
 };
 
+export const isSupabaseConfigured = () => {
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+  return Boolean(supabaseUrl && supabaseAnonKey && supabaseUrl !== 'MY_APP_URL' && supabaseUrl.startsWith('http'));
+};
+
 export const supabase = getSupabase();

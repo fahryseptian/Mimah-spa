@@ -29,7 +29,9 @@ import {
   CreditCard,
   History,
   User,
-  LogOut
+  LogOut,
+  BellRing,
+  Coffee
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useApp } from '../../context/AppContext';
@@ -38,10 +40,13 @@ import { PushNotificationSwitch } from './PushNotificationSwitch';
 import { supabase } from '../../lib/supabase';
 import { ActiveSessionGuide } from './ActiveSessionGuide';
 import { TherapistSchedule } from './TherapistSchedule';
+import { IncomingOrderAlertModal } from './IncomingOrderAlertModal';
+import { soundFx } from '../../utils/audioAlert';
 
 export const TherapistDashboard: React.FC = () => {
   const { 
     therapists, 
+    updateTherapist,
     currentTherapistId, 
     setCurrentTherapistId, 
     toggleTherapistStatus, 
@@ -58,6 +63,17 @@ export const TherapistDashboard: React.FC = () => {
 
   const therapist = therapists.find(t => t.id === currentTherapistId) || therapists[0];
   const isOnline = therapist.status === 'online';
+  const isBreak = therapist.status === 'busy';
+
+  const handleToggleBreak = () => {
+    if (isBreak) {
+      updateTherapist(therapist.id, { status: 'online' });
+      showToast('Selesai istirahat! Status Anda kembali Siap Tugas (Online).', 'success');
+    } else {
+      updateTherapist(therapist.id, { status: 'busy' });
+      showToast('Mode Istirahat Aktif. Pesanan masuk dijeda sementara.', 'info');
+    }
+  };
 
   // State to track previous bookings length to trigger push notification
   const [prevBookingsCount, setPrevBookingsCount] = useState(bookings.length);
@@ -99,127 +115,200 @@ export const TherapistDashboard: React.FC = () => {
   const [cashoutBank, setCashoutBank] = useState<string>('Bank BCA');
   const [cashoutAccountNo, setCashoutAccountNo] = useState<string>('');
   const [cashoutAccountName, setCashoutAccountName] = useState<string>('');
+  const [incomingOrderAlert, setIncomingOrderAlert] = useState<any | null>(null);
+
+  const handleAcceptIncomingOrder = (order: any) => {
+    updateBookingStatus(order.id, 'therapist_on_the_way');
+    showToast(`Pesanan #${order.bookingCode} berhasil diterima! Menuju lokasi klien.`, 'success');
+    setIncomingOrderAlert(null);
+  };
+
+  const handleDeclineIncomingOrder = (order: any, reason: string) => {
+    showToast(`Pesanan #${order.bookingCode} dilewati: ${reason}`, 'info');
+    setIncomingOrderAlert(null);
+  };
+
+  const triggerTestOrderAlert = () => {
+    const target = activeOrders[0] || bookings[0] || {
+      id: 'demo-incoming-1',
+      bookingCode: 'MIMAH-' + Math.floor(1000 + Math.random() * 9000),
+      serviceTitle: 'Traditional Javanese & North-Sumatran Massage',
+      servicePrice: 195000,
+      durationMinutes: 90,
+      totalAmount: 207000,
+      transportCost: 12000,
+      estimatedDistanceKm: 4.2,
+      customerName: 'Sarah Siregar',
+      customerPhone: '0812-8899-7766',
+      address: 'Jl. Setiabudi No. 124, Komplek Tasbih I',
+      kecamatan: 'Medan Selayang',
+      city: 'Medan',
+      addressNotes: 'Pagar hitam, sebelah pohon mangga',
+      bookingTimeSlot: '14:00 - 15:30',
+      status: 'confirmed'
+    };
+    soundFx.playIncomingOrderChime();
+    setIncomingOrderAlert(target);
+  };
 
   return (
     <div className="space-y-8 w-full max-w-full overflow-x-hidden pb-32">
       
-      {/* Dynamic Header Overlay */}
-      <div className="bg-stone-900 text-white rounded-[3rem] p-8 sm:p-12 border border-stone-800 shadow-2xl relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/10 rounded-full -mr-40 -mt-40 blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-80 h-80 bg-blue-500/10 rounded-full -ml-40 -mb-40 blur-3xl pointer-events-none" />
+      {/* Optimized Header Card */}
+      <div className="bg-stone-950 text-white rounded-[3.5rem] p-8 sm:p-12 border border-white/5 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)] relative overflow-hidden group">
+        {/* Abstract Background Effects */}
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-emerald-500/10 rounded-full -mr-64 -mt-64 blur-[100px] pointer-events-none group-hover:bg-emerald-500/15 transition-all duration-1000" />
+        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-blue-500/5 rounded-full -ml-48 -mb-48 blur-[80px] pointer-events-none" />
+        
+        {/* Grain Overlay */}
+        <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')] bg-repeat" />
 
-        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-10">
-          
-          <div className="flex items-center gap-6">
-            <div className="relative">
-              <motion.div 
-                animate={{ scale: isOnline ? [1, 1.05, 1] : 1 }}
-                transition={{ repeat: Infinity, duration: 4 }}
-                className="absolute -inset-2 bg-gradient-to-tr from-emerald-500/30 to-blue-500/30 rounded-[2.5rem] blur-xl opacity-50" 
-              />
-              <img
-                src={therapist.photoUrl}
-                alt={therapist.name}
-                referrerPolicy="no-referrer"
-                className="relative w-20 h-20 sm:w-28 sm:h-28 rounded-[2rem] object-cover border-4 border-stone-800 shadow-2xl"
-              />
-              <div className={`absolute -bottom-2 -right-2 w-8 h-8 rounded-2xl border-4 border-stone-900 flex items-center justify-center ${
-                isOnline ? 'bg-emerald-500 shadow-lg shadow-emerald-500/50' : 'bg-stone-500'
-              }`}>
-                <Power className="w-4 h-4 text-white" />
+        <div className="relative z-10 flex flex-col gap-10">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
+            <div className="flex items-center gap-6 sm:gap-8">
+              <div className="relative">
+                <motion.div 
+                  animate={{ scale: isOnline ? [1, 1.08, 1] : 1, opacity: isOnline ? [0.2, 0.4, 0.2] : 0 }}
+                  transition={{ repeat: Infinity, duration: 3 }}
+                  className="absolute -inset-4 bg-emerald-500 rounded-full blur-2xl" 
+                />
+                <div className="relative p-1 bg-white/5 rounded-[2.5rem] border border-white/10">
+                  <img
+                    src={therapist.photoUrl}
+                    alt={therapist.name}
+                    referrerPolicy="no-referrer"
+                    className="w-24 h-24 sm:w-32 sm:h-32 rounded-[2.2rem] object-cover shadow-2xl"
+                  />
+                  <div className={`absolute -bottom-1 -right-1 w-10 h-10 rounded-2xl border-[6px] border-stone-950 flex items-center justify-center ${
+                    isOnline ? 'bg-emerald-500 shadow-lg shadow-emerald-500/50' : 'bg-stone-700'
+                  }`}>
+                    <Power className={`w-4 h-4 text-white ${isOnline ? 'animate-pulse' : ''}`} />
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-full text-[8px] font-black text-emerald-400 uppercase tracking-[0.2em]">
+                      {isOnline ? 'Status: Active' : 'Status: Offline'}
+                    </span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-white/10" />
+                    <div className="flex items-center gap-1">
+                      <ShieldCheck className="w-3 h-3 text-blue-400" />
+                      <span className="text-[8px] font-black text-stone-500 uppercase tracking-widest">Verified Mitra</span>
+                    </div>
+                  </div>
+                  <h1 className="text-3xl sm:text-5xl font-black font-serif-display tracking-tight text-white leading-tight">
+                    {therapist.name}
+                  </h1>
+                  <div className="flex items-center gap-4 text-xs font-bold">
+                    <div className="flex items-center gap-1.5 text-amber-400">
+                      <Star className="w-4 h-4 fill-amber-400" />
+                      {therapist.rating}
+                      <span className="text-stone-500 font-medium text-[10px] ml-1">({therapist.reviewCount} Ulasan)</span>
+                    </div>
+                    <span className="w-1 h-1 rounded-full bg-white/10" />
+                    <div className="flex items-center gap-1.5 text-stone-400">
+                      <MapPin className="w-4 h-4" />
+                      {therapist.baseKecamatan}
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div className="space-y-3">
-              <div className="flex flex-col gap-1">
-                <div className="flex items-center gap-3">
-                  <h1 className="text-2xl sm:text-4xl font-bold font-serif-display tracking-tight text-white">{therapist.name}</h1>
-                  <div className="px-3 py-1 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-[9px] font-black text-white uppercase tracking-widest flex items-center gap-1.5">
-                    <ShieldCheck className="w-3 h-3 text-emerald-400" />
-                    <span>Verified Mitra</span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4 text-xs font-medium text-stone-400">
-                  <span className="flex items-center gap-1.5 text-amber-400 font-bold">
-                    <Star className="w-4 h-4 fill-amber-400" />
-                    {therapist.rating} <span className="opacity-60 text-[10px]">({therapist.reviewCount} Ulasan)</span>
-                  </span>
-                  <span className="w-1 h-1 rounded-full bg-stone-700" />
-                  <span className="flex items-center gap-1.5">
-                    <MapPin className="w-4 h-4 text-stone-600" />
-                    {therapist.baseKecamatan}
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 pt-2">
-                <select
-                  value={currentTherapistId}
-                  onChange={(e) => setCurrentTherapistId(e.target.value)}
-                  className="bg-white/5 text-stone-400 border border-white/10 rounded-xl px-4 py-2 text-[11px] font-bold outline-none hover:bg-white/10 transition-all cursor-pointer"
-                >
-                  {therapists.map(t => (
-                    <option key={t.id} value={t.id}>Sesi: {t.name}</option>
-                  ))}
-                </select>
-                <div className="px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-[10px] font-black text-emerald-400 uppercase tracking-widest animate-pulse">
-                  {isOnline ? 'Menerima Order' : 'Istirahat'}
-                </div>
-                <motion.a
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  href="https://wa.me/628123456789"
-                  target="_blank"
-                  className="px-4 py-2 bg-stone-800 border border-stone-700 rounded-xl text-[9px] font-black text-stone-300 uppercase tracking-widest flex items-center gap-2 hover:bg-stone-700 transition-all"
-                >
-                  <MessageCircle className="w-3.5 h-3.5 text-emerald-500" />
-                  Hubungi Admin
-                </motion.a>
-              </div>
+            <div className="flex items-center gap-3 md:self-start">
+              <select
+                value={currentTherapistId}
+                onChange={(e) => setCurrentTherapistId(e.target.value)}
+                className="bg-white/5 text-stone-400 border border-white/10 rounded-2xl px-5 py-3 text-[11px] font-black uppercase tracking-widest outline-none hover:bg-white/10 transition-all cursor-pointer appearance-none min-w-[180px]"
+              >
+                {therapists.map(t => (
+                  <option key={t.id} value={t.id} className="bg-stone-900 text-white">Sesi: {t.name}</option>
+                ))}
+              </select>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="p-3.5 bg-white/5 border border-white/10 rounded-2xl text-stone-300 hover:bg-white/10 transition-all"
+                title="Refresh Status"
+                onClick={() => window.location.reload()}
+              >
+                <TrendingUp className="w-5 h-5" />
+              </motion.button>
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row lg:flex-col items-stretch lg:items-end gap-4">
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => {
-                if (!isOnline) {
-                  // Request GPS when turning online
-                  if (navigator.geolocation) {
-                    navigator.geolocation.getCurrentPosition(
-                      (position) => {
-                        toggleTherapistStatus(therapist.id);
-                        showToast(`GPS Aktif (${position.coords.latitude.toFixed(4)}, ${position.coords.longitude.toFixed(4)}). Status Anda kini Online!`, 'success');
-                      },
-                      (error) => {
-                        console.warn('GPS error:', error);
-                        // Still allow going online but warn about GPS
-                        toggleTherapistStatus(therapist.id);
-                        showToast('Peringatan: GPS tidak aktif/izin ditolak. Harap aktifkan GPS agar pesanan terdekat akurat.', 'success');
-                      },
-                      { timeout: 10000, enableHighAccuracy: true }
-                    );
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-end">
+            <div className="space-y-4">
+              <PushNotificationSwitch />
+              <div className="flex items-center gap-3 px-2">
+                <div className="flex -space-x-3">
+                  {[1, 2, 3].map(i => (
+                    <div key={i} className="w-8 h-8 rounded-full border-2 border-stone-950 bg-stone-800 overflow-hidden shadow-xl">
+                      <img src={`https://i.pravatar.cc/100?img=${i + 10}`} alt="" className="w-full h-full object-cover grayscale opacity-50" />
+                    </div>
+                  ))}
+                </div>
+                <p className="text-[10px] font-bold text-stone-500 leading-tight">
+                  <span className="text-stone-300">12 Mitra Online</span> sedang aktif di area ini.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-4">
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => {
+                  if (!isOnline) {
+                    if (navigator.geolocation) {
+                      navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                          toggleTherapistStatus(therapist.id);
+                          showToast(`GPS Aktif (${position.coords.latitude.toFixed(4)}, ${position.coords.longitude.toFixed(4)}). Status Anda kini Online!`, 'success');
+                        },
+                        (error) => {
+                          console.warn('GPS error:', error);
+                          toggleTherapistStatus(therapist.id);
+                          showToast('Peringatan: GPS tidak aktif. Status tetap Online.', 'success');
+                        },
+                        { timeout: 10000, enableHighAccuracy: true }
+                      );
+                    } else {
+                      toggleTherapistStatus(therapist.id);
+                      showToast('Status Anda kini Online', 'success');
+                    }
                   } else {
                     toggleTherapistStatus(therapist.id);
-                    showToast('Status Anda kini Online', 'success');
+                    showToast('Berhasil mematikan status (Offline)', 'success');
                   }
-                } else {
-                  toggleTherapistStatus(therapist.id);
-                  showToast('Berhasil mematikan status (Offline)', 'success');
-                }
-              }}
-              className={`px-10 py-5 rounded-3xl text-[11px] font-black tracking-[0.2em] uppercase flex items-center justify-center gap-3 transition-all shadow-2xl ${
-                isOnline
-                  ? 'bg-emerald-600 text-white shadow-emerald-900/40 hover:bg-emerald-500'
-                  : 'bg-stone-800 text-stone-400 border border-stone-700 hover:text-white'
-              }`}
-            >
-              <Power className="w-5 h-5" />
-              <span>{isOnline ? 'Matikan Status' : 'Aktifkan Status'}</span>
-            </motion.button>
-            <div className="w-full lg:max-w-[240px]">
-              <PushNotificationSwitch />
+                }}
+                className={`flex-1 py-6 rounded-[2rem] text-xs font-black tracking-[0.2em] uppercase flex items-center justify-center gap-3 transition-all relative overflow-hidden ${
+                  isOnline
+                    ? 'bg-emerald-500 text-white shadow-[0_20px_40px_-12px_rgba(16,185,129,0.4)] hover:bg-emerald-400'
+                    : 'bg-white text-stone-900 shadow-[0_20px_40px_-12px_rgba(255,255,255,0.1)] hover:bg-stone-100'
+                }`}
+              >
+                {isOnline ? <Power className="w-5 h-5" /> : <Play className="w-5 h-5 fill-current" />}
+                <span>{isOnline ? 'Matikan Status' : 'Aktifkan Status'}</span>
+              </motion.button>
+              
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={handleToggleBreak}
+                className={`px-8 py-6 rounded-[2rem] border text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2.5 cursor-pointer ${
+                  isBreak 
+                    ? 'bg-amber-400 text-stone-950 border-amber-300 shadow-[0_20px_40px_-12px_rgba(251,191,36,0.4)] hover:bg-amber-300' 
+                    : 'bg-white/5 border-white/10 text-stone-300 hover:bg-white/10 hover:text-white'
+                }`}
+                title={isBreak ? 'Klik untuk mengakhiri waktu istirahat dan kembali online' : 'Klik untuk istirahat sementara'}
+              >
+                <Coffee className={`w-4 h-4 ${isBreak ? 'animate-bounce' : ''}`} />
+                <span>{isBreak ? 'Selesai Istirahat' : 'Istirahat'}</span>
+              </motion.button>
             </div>
           </div>
         </div>
@@ -260,16 +349,28 @@ export const TherapistDashboard: React.FC = () => {
           >
             {/* Active Orders Section */}
             <div className="space-y-6">
-              <div className="flex items-center justify-between px-2">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between px-2 gap-3">
                 <h2 className="text-2xl font-bold text-stone-900 font-serif-display flex items-center gap-3">
                   Tugas Aktif
                   <span className="px-3 py-1 bg-stone-900 text-white rounded-full text-[11px] font-black">
                     {activeOrders.length}
                   </span>
                 </h2>
-                <div className="text-[10px] font-black text-stone-400 uppercase tracking-widest flex items-center gap-2 bg-stone-50 px-3 py-1 rounded-full">
-                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  Real-time Update
+                <div className="flex items-center gap-3">
+                  <motion.button
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={triggerTestOrderAlert}
+                    className="px-4 py-2 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all cursor-pointer shadow-sm"
+                    title="Uji simulasi suara dering & modal pesanan masuk"
+                  >
+                    <BellRing className="w-3.5 h-3.5 text-emerald-600 animate-bounce" />
+                    <span>Uji Alert Masuk</span>
+                  </motion.button>
+                  <div className="text-[10px] font-black text-stone-400 uppercase tracking-widest flex items-center gap-2 bg-stone-50 px-3 py-2 rounded-2xl border border-stone-100">
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    Live Sync
+                  </div>
                 </div>
               </div>
 
@@ -1009,6 +1110,16 @@ export const TherapistDashboard: React.FC = () => {
           </div>
         )}
       </AnimatePresence>
+
+      {/* Incoming Order Ringtone & Dispatch Modal */}
+      <IncomingOrderAlertModal
+        order={incomingOrderAlert}
+        therapist={therapist}
+        isOpen={!!incomingOrderAlert}
+        onAccept={handleAcceptIncomingOrder}
+        onDecline={handleDeclineIncomingOrder}
+        onClose={() => setIncomingOrderAlert(null)}
+      />
 
     </div>
   );

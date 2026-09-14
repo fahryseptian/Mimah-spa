@@ -18,7 +18,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useApp } from '../../context/AppContext';
 
 export const BroadcastCenter: React.FC = () => {
-  const { therapists, customerProfiles, addWhatsappLog, whatsappLogs } = useApp();
+  const { therapists, customerProfiles, addWhatsappLog, whatsappLogs, showToast } = useApp();
   const [targetType, setTargetType] = useState<'customer' | 'therapist'>('customer');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -55,10 +55,11 @@ export const BroadcastCenter: React.FC = () => {
           addWhatsappLog(target.phone, message, `Broadcast ${targetType}`);
         }
       });
+      const recipientCount = selectedIds.length;
       setIsSending(false);
       setMessage('');
       setSelectedIds([]);
-      alert(`Pesan berhasil dikirim ke ${selectedIds.length} penerima!`);
+      showToast(`Siaran pesan berhasil dikirim ke ${recipientCount} penerima via WhatsApp Engine!`, 'success');
     }, 1500);
   };
 

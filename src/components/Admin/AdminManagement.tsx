@@ -32,7 +32,9 @@ import {
   Percent,
   LogOut,
   User,
-  Zap
+  Zap,
+  Activity,
+  Database
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { Therapist, TransportTariffConfig, Voucher } from '../../types';
@@ -42,12 +44,17 @@ import { FinanceDashboard } from './FinanceDashboard';
 import { CustomerCRM } from './CustomerCRM';
 import { GlobalSettings } from './GlobalSettings';
 import { UATSimulator } from './UATSimulator';
+import { DatabaseHealthCheck } from './DatabaseHealthCheck';
 import { DisputeCenter } from './DisputeCenter';
 import { MonitoringMap } from './MonitoringMap';
 import { BroadcastCenter } from './BroadcastCenter';
 import { VoucherManagement } from './VoucherManagement';
 import { ServiceManagement } from './ServiceManagement';
 import { InventoryManagement } from './InventoryManagement';
+import { TherapistRecommendation } from './TherapistRecommendation';
+import { SupabaseSchemaCenter } from './SupabaseSchemaCenter';
+import { AdminProfile } from './AdminProfile';
+import { BookingItem } from '../../types';
 
 export const AdminManagement: React.FC = () => {
   const { 
@@ -83,6 +90,7 @@ export const AdminManagement: React.FC = () => {
 
   // Inventory Management State
   const [selectedTherapistForInv, setSelectedTherapistForInv] = useState<string | null>(null);
+  const [selectedBookingForMatch, setSelectedBookingForMatch] = useState<BookingItem | null>(null);
   const [invItemId, setInvItemId] = useState('');
   const [invQty, setInvQty] = useState(1);
   const [invCondition, setInvCondition] = useState<'good' | 'worn' | 'broken'>('good');
@@ -409,6 +417,8 @@ export const AdminManagement: React.FC = () => {
             { id: 'vouchers', label: 'Voucher', icon: Tag },
             { id: 'finance', label: 'Keuangan', icon: Coins },
             { id: 'settings', label: 'Pengaturan', icon: Settings },
+            { id: 'database', label: 'Skema Supabase', icon: Database },
+            { id: 'health', label: 'Kesehatan Sistem', icon: Activity },
             { id: 'uat', label: 'Simulator UAT', icon: Zap },
           ].map((tab) => (
             <button
@@ -442,8 +452,20 @@ export const AdminManagement: React.FC = () => {
           />
         )}
 
+        {selectedBookingForMatch && (
+          <TherapistRecommendation 
+            booking={selectedBookingForMatch}
+            isOpen={!!selectedBookingForMatch}
+            onClose={() => setSelectedBookingForMatch(null)}
+          />
+        )}
+
         {activeAdminTab === 'finance' && (
           <FinanceDashboard />
+        )}
+
+        {activeAdminTab === 'health' && (
+          <DatabaseHealthCheck />
         )}
 
         {activeAdminTab === 'uat' && (
@@ -457,12 +479,13 @@ export const AdminManagement: React.FC = () => {
         {activeAdminTab === 'settings' && (
           <GlobalSettings />
         )}
+
+        {activeAdminTab === 'database' && (
+          <SupabaseSchemaCenter />
+        )}
         
         {activeAdminTab === 'profile' && (
-          <div className="bg-white rounded-[2.5rem] border border-stone-100 shadow-xl p-8 space-y-6">
-            <h3 className="text-xl font-bold text-stone-900 font-serif-display">Profil Admin</h3>
-            <p className="text-stone-600">Fitur pengelolaan profil admin akan segera hadir.</p>
-          </div>
+          <AdminProfile />
         )}
 
         {activeAdminTab === 'disputes' && (
@@ -687,6 +710,15 @@ export const AdminManagement: React.FC = () => {
                           <div className="flex items-center gap-2">
                             {b.therapistPhoto && <img src={b.therapistPhoto} className="w-6 h-6 rounded-lg object-cover" alt="" />}
                             <span className="font-bold text-stone-800">{b.therapistName || 'Pending'}</span>
+                            {!b.therapistId && b.status !== 'cancelled' && (
+                              <button 
+                                onClick={() => setSelectedBookingForMatch(b)}
+                                className="p-1.5 bg-amber-50 text-amber-600 hover:bg-amber-100 rounded-lg transition-all"
+                                title="Smart Match (Rekomendasi)"
+                              >
+                                <Zap className="w-3 h-3 fill-amber-500" />
+                              </button>
+                            )}
                           </div>
                         </td>
                         <td className="py-4 px-4 uppercase font-black text-[9px] text-stone-500">{b.paymentMethod}</td>

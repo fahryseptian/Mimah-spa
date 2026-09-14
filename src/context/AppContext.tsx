@@ -140,6 +140,9 @@ interface AppContextType {
   awardPointsToCustomer: (phone: string, points: number) => void;
   logout: () => void;
   isDbConnected: boolean;
+  lastStatusUpdate: { bookingId: string; bookingCode: string; status: BookingStatus } | null;
+  clearLastStatusUpdate: () => void;
+  assignTherapist: (bookingId: string, therapist: Therapist) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -148,6 +151,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [user, setUser] = React.useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isDbConnected, setIsDbConnected] = useState(false);
+  const [lastStatusUpdate, setLastStatusUpdate] = useState<{ bookingId: string; bookingCode: string; status: BookingStatus } | null>(null);
+  
+  const clearLastStatusUpdate = () => setLastStatusUpdate(null);
+
   const [userRole, setUserRoleState] = useState<UserRole>(() => {
     const savedRole = localStorage.getItem('nsc_user_role');
     if (savedRole === 'admin' || savedRole === 'therapist' || savedRole === 'customer') {
@@ -1185,6 +1192,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         if (activeBooking && activeBooking.id === bookingId) {
           setActiveBooking(updated);
         }
+        
+        // Trigger prominent notification
+        setLastStatusUpdate({
+          bookingId: b.id,
+          bookingCode: b.bookingCode,
+          status: status
+        });
+
         updatedRecord = updated;
         return updated;
       }
@@ -1680,6 +1695,37 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }));
   };
 
+  const assignTherapist = (bookingId: string, therapist: Therapist) => {
+    setBookings(prev => prev.map(b => {
+      if (b.id === bookingId) {
+        const updated = {
+          ...b,
+          therapistId: therapist.id,
+          therapistName: therapist.name,
+          therapistPhone: therapist.phone,
+          therapistPhoto: therapist.photoUrl,
+          status: 'confirmed' as BookingStatus,
+          statusLogs: [
+            ...b.statusLogs,
+            { 
+              timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }), 
+              status: 'confirmed' as BookingStatus, 
+              note: `Terapis ${therapist.name} telah ditugaskan ke pesanan Anda.` 
+            }
+          ]
+        };
+        
+        if (activeBooking && activeBooking.id === bookingId) {
+          setActiveBooking(updated);
+        }
+        
+        showToast(`Terapis ${therapist.name} berhasil ditugaskan!`, 'success');
+        return updated;
+      }
+      return b;
+    }));
+  };
+
   const logout = async () => {
     try {
       if (supabase) {
@@ -1815,7 +1861,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         updateGlobalSettings,
         awardPointsToCustomer,
         logout,
-        isDbConnected
+        isDbConnected,
+        lastStatusUpdate,
+        clearLastStatusUpdate,
+        assignTherapist
       }}
     >
       <Toaster richColors position="top-right" />
