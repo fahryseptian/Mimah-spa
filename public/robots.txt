@@ -1,0 +1,14 @@
+# robots.txt for Mimah Spa Medan (Home Service Spa & Massage)
+User-agent: *
+Allow: /
+Allow: /assets/
+Allow: /icon.svg
+Allow: /pwa-*
+
+# Disallow internal restricted portals
+Disallow: /admin
+Disallow: /therapist-portal
+Disallow: /api/
+
+# Sitemap location
+Sitemap: https://ais-pre-ahsiah7djty6agcpxughto-818964153404.asia-east1.run.app/sitemap.xml

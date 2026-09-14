@@ -409,17 +409,7 @@ export const TherapistDashboard: React.FC = () => {
                   </span>
                 </h2>
                 <div className="flex items-center gap-3">
-                  <motion.button
-                    whileHover={{ scale: 1.03 }}
-                    whileTap={{ scale: 0.97 }}
-                    onClick={triggerTestOrderAlert}
-                    className="px-4 py-2 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all cursor-pointer shadow-sm"
-                    title="Uji simulasi suara dering & modal pesanan masuk"
-                  >
-                    <BellRing className="w-3.5 h-3.5 text-emerald-600 animate-bounce" />
-                    <span>Uji Alert Masuk</span>
-                  </motion.button>
-                  <div className="text-[10px] font-black text-stone-400 uppercase tracking-widest flex items-center gap-2 bg-stone-50 px-3 py-2 rounded-2xl border border-stone-100">
+                  <div className="text-[10px] font-black text-stone-400 uppercase tracking-widest flex items-center gap-2 bg-stone-50 px-3.5 py-2 rounded-2xl border border-stone-100">
                     <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                     Live Sync
                   </div>

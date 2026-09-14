@@ -274,11 +274,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const [customerProfiles, setCustomerProfiles] = useState<CustomerProfile[]>(() => {
     const saved = localStorage.getItem('mimah_customer_profiles_v1');
-    return saved ? JSON.parse(saved) : [
-      { id: 'cust-1', name: 'Fahry Septian', phone: '6281234567890', loyaltyPoints: 15000, totalTransactions: 12, totalSpent: 2450000, joinedDate: '2024-01-15', isVip: true },
-      { id: 'cust-2', name: 'Siti Aminah', phone: '628987654321', loyaltyPoints: 2000, totalTransactions: 2, totalSpent: 450000, joinedDate: '2024-05-10' },
-      { id: 'cust-3', name: 'Budi Santoso', phone: '6281122334455', loyaltyPoints: 500, totalTransactions: 1, totalSpent: 185000, joinedDate: '2024-08-20' },
-    ];
+    return saved ? JSON.parse(saved) : [];
   });
 
   const updateWhatsappNumber = (num: string) => {
@@ -290,20 +286,31 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     localStorage.setItem('mimah_whatsapp_cs_v1', clean);
   };
 
-  // NEW: Fetch data from Supabase on mount
+  // Production-Ready: Parallelized Fast Fetch from Supabase on mount
   useEffect(() => {
     const fetchData = async () => {
       if (!supabase) return;
 
       try {
-        // Fetch Therapists
-        const { data: therapistData } = await supabase
-          .from('therapists')
-          .select('*')
-          .order('name');
-        
-        if (therapistData && therapistData.length > 0) {
-          const mappedTherapists = therapistData.map((t: any) => ({
+        const [
+          therapistsRes,
+          servicesRes,
+          bookingsRes,
+          reviewsRes,
+          vouchersRes,
+          settingsRes
+        ] = await Promise.allSettled([
+          supabase.from('therapists').select('*').order('name'),
+          supabase.from('services').select('*').order('title'),
+          supabase.from('bookings').select('*').order('created_at', { ascending: false }),
+          supabase.from('reviews').select('*').order('created_at', { ascending: false }),
+          supabase.from('vouchers').select('*'),
+          supabase.from('settings').select('*').eq('key', 'tariff_config').maybeSingle()
+        ]);
+
+        // Process Therapists
+        if (therapistsRes.status === 'fulfilled' && therapistsRes.value.data && therapistsRes.value.data.length > 0) {
+          const mappedTherapists = therapistsRes.value.data.map((t: any) => ({
             id: t.id,
             name: t.name,
             phone: t.phone || '',
@@ -327,18 +334,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             assignedInventory: t.assignedInventory || []
           }));
           setTherapists(mappedTherapists);
-        } else {
-          setTherapists(INITIAL_THERAPISTS);
         }
 
-        // Fetch Services
-        const { data: serviceData } = await supabase
-          .from('services')
-          .select('*')
-          .order('title');
-        
-        if (serviceData && serviceData.length > 0) {
-          const mappedServices = serviceData.map((s: any) => {
+        // Process Services
+        if (servicesRes.status === 'fulfilled' && servicesRes.value.data && servicesRes.value.data.length > 0) {
+          const mappedServices = servicesRes.value.data.map((s: any) => {
             let durationOpts = s.durationOptions || s.duration_options || [];
             if (typeof durationOpts === 'string') {
               try { durationOpts = JSON.parse(durationOpts); } catch (e) { durationOpts = []; }
@@ -392,18 +392,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             };
           });
           setServices(mappedServices);
-        } else {
-          setServices(INITIAL_SERVICES);
         }
 
-        // Fetch Bookings
-        const { data: bookingData } = await supabase
-          .from('bookings')
-          .select('*')
-          .order('created_at', { ascending: false });
-        
-        if (bookingData && bookingData.length > 0) {
-          const mappedBookings = bookingData.map((b: any) => ({
+        // Process Bookings
+        if (bookingsRes.status === 'fulfilled' && bookingsRes.value.data && bookingsRes.value.data.length > 0) {
+          const mappedBookings = bookingsRes.value.data.map((b: any) => ({
             id: b.id,
             bookingCode: b.booking_code,
             createdAt: b.created_at,
@@ -445,38 +438,23 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           setBookings(mappedBookings);
         }
 
-        // Fetch Reviews
-        const { data: reviewData } = await supabase
-          .from('reviews')
-          .select('*')
-          .order('created_at', { ascending: false });
-        
-        if (reviewData) {
-          setReviews(reviewData);
+        // Process Reviews
+        if (reviewsRes.status === 'fulfilled' && reviewsRes.value.data && reviewsRes.value.data.length > 0) {
+          setReviews(reviewsRes.value.data);
         }
 
-        // Fetch Vouchers
-        const { data: voucherData } = await supabase
-          .from('vouchers')
-          .select('*');
-        
-        if (voucherData && voucherData.length > 0) {
-          setVouchers(voucherData);
+        // Process Vouchers
+        if (vouchersRes.status === 'fulfilled' && vouchersRes.value.data && vouchersRes.value.data.length > 0) {
+          setVouchers(vouchersRes.value.data);
         }
 
-        // Fetch Settings (Tariff)
-        const { data: settingsData } = await supabase
-          .from('settings')
-          .select('*')
-          .eq('key', 'tariff_config')
-          .single();
-        
-        if (settingsData?.value) {
-          setTariffConfig(settingsData.value);
+        // Process Settings
+        if (settingsRes.status === 'fulfilled' && settingsRes.value.data?.value) {
+          setTariffConfig(settingsRes.value.data.value);
         }
 
       } catch (err) {
-        console.error('Error fetching Supabase data:', err);
+        console.error('Error fetching Supabase data in production mode:', err);
       }
     };
 
@@ -965,19 +943,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // --- FITUR 2: THERAPIST SOS & CLIENT CARE ---
   const [sosAlerts, setSosAlerts] = useState<TherapistSOSAlert[]>(() => {
     const saved = localStorage.getItem('mimah_sos_alerts_v1');
-    return saved ? JSON.parse(saved) : [
-      {
-        id: 'sos-1',
-        therapistId: 'terapis-1',
-        therapistName: 'Siti Rahmawati, S.Tr.Kes',
-        therapistPhone: '0812-3456-7890',
-        locationAddress: 'Jl. Dr. Mansyur No. 42, Medan Baru',
-        lat: 3.5621,
-        lng: 98.6541,
-        timestamp: '10:15 WIB',
-        status: 'resolved'
-      }
-    ];
+    return saved ? JSON.parse(saved) : [];
   });
 
   const triggerSOSAlert = (therapistId: string, address: string) => {
@@ -1008,22 +974,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const [clientCareNotes, setClientCareNotes] = useState<ClientCareNote[]>(() => {
     const saved = localStorage.getItem('mimah_care_notes_v1');
-    return saved ? JSON.parse(saved) : [
-      {
-        id: 'care-1',
-        bookingCode: 'MIMAH-8821',
-        customerName: 'Kak Rina Wijaya',
-        customerPhone: '081299887766',
-        therapistId: 'terapis-1',
-        therapistName: 'Siti Rahmawati',
-        pressurePreference: 'sedang',
-        oilPreference: 'Lavender Calm',
-        focusAreas: ['Pundak', 'Punggung Bawah'],
-        contraindications: 'Sensitif pada pinggang pasca operasi 2 tahun lalu',
-        therapistNotes: 'Suka aroma lavender lembut, gerakan relaksasi perlahan di area pinggang.',
-        updatedAt: '08 Sep 2026'
-      }
-    ];
+    return saved ? JSON.parse(saved) : [];
   });
 
   const saveClientCareNote = (note: ClientCareNote) => {
@@ -1042,22 +993,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // --- FITUR 3: ADMIN REFUNDS & DISPUTE RESOLUTION ---
   const [refundDisputes, setRefundDisputes] = useState<RefundDispute[]>(() => {
     const saved = localStorage.getItem('mimah_refund_disputes_v1');
-    return saved ? JSON.parse(saved) : [
-      {
-        id: 'ref-disp-1',
-        bookingCode: 'MIMAH-9012',
-        customerName: 'Ibu Sarah Amelia',
-        customerPhone: '081377665544',
-        serviceTitle: 'Pijat Tradisional & Totok Wajah',
-        totalAmount: 185000,
-        refundPercent: 100,
-        refundAmount: 185000,
-        reason: 'Dibatalkan H-1 jam sebelum jadwal karena mendadak ada acara keluarga',
-        bankInfo: 'BCA 821098212 a.n Sarah Amelia',
-        status: 'pending',
-        createdAt: '08 Sep 2026'
-      }
-    ];
+    return saved ? JSON.parse(saved) : [];
   });
 
   const submitRefundDispute = (data: Omit<RefundDispute, 'id' | 'createdAt' | 'status'>) => {
@@ -1081,72 +1017,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     showToast('Sanggahan refund ditolak sesuai ketentuan S&K.', 'info');
   };
 
-  // NEW: Automated active session timer (Autocompletion logic + Background trigger)
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setBookings(prevBookings => {
-        let hasChanges = false;
-        const nextBookings = prevBookings.map(booking => {
-          if (booking.status === 'in_session') {
-            // Find when they entered "in_session"
-            const inSessionLog = booking.statusLogs?.find(l => l.status === 'in_session');
-            const inSessionTime = inSessionLog ? new Date(inSessionLog.timestamp).getTime() : 0;
-            const now = Date.now();
-            
-            // Fast-forward simulation: auto complete after 45 seconds of active session in demo mode!
-            if (inSessionTime > 0 && now - inSessionTime >= 45 * 1000) {
-              hasChanges = true;
-              
-              // Trigger WhatsApp notification for completion automatically
-              const message = `Halo Kak ${booking.customerName}, layanan pijat ${booking.serviceTitle} dari Mimah Spa oleh Terapis ${booking.therapistName} telah selesai dilakukan. Terima kasih atas kepercayaan Kakak! Hubungi kami untuk pemesanan berikutnya.`;
-              
-              // Add logs in background asynchronously
-              setTimeout(() => {
-                setWhatsappLogs(prev => [
-                  {
-                    id: `wa-log-${Date.now()}`,
-                    timestamp: new Date().toLocaleString('id-ID'),
-                    recipient: booking.customerPhone,
-                    message: message,
-                    type: 'Selesai Layanan (Auto)'
-                  },
-                  ...prev
-                ]);
-                toast.success(`Sesi Pijat ${booking.customerName} otomatis diselesaikan oleh AI System!`, {
-                  description: 'Sistem mendeteksi durasi layanan telah habis.',
-                  duration: 6000
-                });
-              }, 100);
+  // Sesi diselesaikan oleh terapis di portal terapis (ActiveSessionGuide) atau oleh admin
 
-              const logs = booking.statusLogs || [];
-              const timeStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-              return {
-                ...booking,
-                status: 'completed' as const,
-                paymentStatus: 'paid' as const,
-                statusLogs: [
-                  ...logs,
-                  {
-                    timestamp: timeStr,
-                    status: 'completed' as const,
-                    note: 'Diselesaikan secara otomatis oleh Sistem Pengatur Waktu Mimah Spa'
-                  }
-                ]
-              };
-            }
-          }
-          return booking;
-        });
-
-        if (hasChanges) {
-          return nextBookings;
-        }
-        return prevBookings;
-      });
-    }, 10000); // Check every 10 seconds
-
-    return () => clearInterval(timer);
-  }, []);
 
   // Ensure we don't aggressively override real data with localStorage fallback
   // Removed local storage sync for therapists and bookings for Strict Cloud Mode.
@@ -1781,19 +1653,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     if (saved) {
       try { return JSON.parse(saved); } catch (e) { console.error(e); }
     }
-    return [
-      {
-        id: 'cashout-1',
-        therapistId: 't-1',
-        therapistName: 'Miftah Nur Jannah',
-        amount: 350000,
-        paymentMethod: 'Transfer BCA',
-        accountNo: '8021982732',
-        accountName: 'Miftah Nur Jannah',
-        status: 'completed',
-        createdAt: new Date(Date.now() - 2 * 24 * 3600 * 1000).toLocaleDateString('id-ID')
-      }
-    ];
+    return [];
   });
 
   useEffect(() => {

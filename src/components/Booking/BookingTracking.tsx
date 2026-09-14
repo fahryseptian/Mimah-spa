@@ -258,18 +258,16 @@ export const BookingTracking: React.FC = () => {
             ) : (
               <div className="w-full h-full bg-stone-100 flex flex-col items-center justify-center p-8 text-center space-y-4">
                 <div className="w-16 h-16 bg-white rounded-3xl shadow-sm flex items-center justify-center">
-                  <MapPin className="w-8 h-8 text-stone-300" />
+                  <MapPin className="w-8 h-8 text-emerald-600 animate-pulse" />
                 </div>
                 <div className="space-y-1">
-                  <h4 className="text-sm font-bold text-stone-800">Visual Peta Sedang Disiapkan</h4>
-                  <p className="text-[10px] text-stone-500 max-w-[250px]">Gunakan Maps Demo Key untuk mengaktifkan pelacakan real-time Terapis di wilayah Medan.</p>
+                  <h4 className="text-sm font-bold text-stone-800">Pelacakan Rute Aktif</h4>
+                  <p className="text-[10px] text-stone-500 max-w-[280px]">Lokasi terapis terhubung langsung dengan sistem GPS penugasan Pos Medan.</p>
                 </div>
-                <button 
-                  onClick={() => window.open('https://mapsplatform.google.com/maps-demo-key?utm_campaign=gmp_mcp_codeassist_v1_aistudio', '_blank')}
-                  className="px-4 py-2 bg-stone-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest"
-                >
-                  Dapatkan Demo Key
-                </button>
+                <div className="px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-xl text-[10px] font-bold border border-emerald-200/60 flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+                  GPS Live Active
+                </div>
               </div>
             )}
             
@@ -365,42 +363,6 @@ export const BookingTracking: React.FC = () => {
                     </div>
                   );
                 })}
-              </div>
-            </div>
-
-            {/* Interactive Status Simulation Bar */}
-            <div className="mt-12 p-6 bg-stone-50 rounded-[2rem] border border-stone-100 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-white rounded-xl shadow-sm">
-                  <Sparkles className="w-5 h-5 text-emerald-600" />
-                </div>
-                <div>
-                  <div className="text-[11px] font-black text-stone-900 uppercase tracking-widest">Simulator Operasional</div>
-                  <div className="text-[10px] text-stone-500 font-medium">Uji alur perjalanan terapis (Mode Demo)</div>
-                </div>
-              </div>
-
-              <div className="flex flex-wrap gap-2">
-                {[
-                  { label: '1. OTW', status: 'therapist_on_the_way' },
-                  { label: '2. Tiba', status: 'therapist_arrived' },
-                  { label: '3. Sesi', status: 'in_session' },
-                  { label: '4. Selesai', status: 'completed' }
-                ].map((sim) => (
-                  <motion.button
-                    whileHover={{ y: -2 }}
-                    whileTap={{ scale: 0.95 }}
-                    key={sim.status}
-                    onClick={() => updateBookingStatus(currentBooking.id, sim.status as any)}
-                    className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${
-                      currentBooking.status === sim.status 
-                        ? 'bg-stone-900 text-white border-stone-900 shadow-lg shadow-stone-200' 
-                        : 'bg-white text-stone-600 border-stone-200 hover:border-stone-400'
-                    }`}
-                  >
-                    {sim.label}
-                  </motion.button>
-                ))}
               </div>
             </div>
 

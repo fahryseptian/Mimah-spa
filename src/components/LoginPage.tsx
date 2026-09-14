@@ -18,26 +18,9 @@ export const LoginPage: React.FC = () => {
 
     const lowerEmail = email.toLowerCase().trim();
 
-    // SUPERADMIN OWNER ROOT ACCESS
-    if (lowerEmail === 'fahryseptian35@gmail.com') {
-      localStorage.setItem('mimah_admin_email', 'fahryseptian35@gmail.com');
-      localStorage.setItem('mimah_admin_name', 'Fahry Septian (Superadmin)');
-      setUserRole('admin');
-      showToast('Selamat datang kembali, Superadmin Fahry Septian!', 'success');
-      setLoading(false);
-      return;
-    }
-
     // Wajib ada koneksi Supabase untuk mode Produksi
     if (!supabase) {
-      // Fallback dev mode check
-      if (password === '8899' || password === '1234' || password === 'admin') {
-        setUserRole('admin');
-        showToast('Masuk sebagai Administrator', 'success');
-        setLoading(false);
-        return;
-      }
-      setError('Koneksi ke database Cloud terputus. Masukkan PIN Admin (8899) atau hubungkan Supabase.');
+      setError('Koneksi ke database Cloud Supabase tidak tersedia. Periksa konfigurasi API Key.');
       setLoading(false);
       return;
     }
@@ -49,10 +32,30 @@ export const LoginPage: React.FC = () => {
       });
 
       if (supaError) {
-        // Fallback check for superadmin or admin PIN
-        if (lowerEmail.includes('admin') || password === '8899' || password === '1234') {
-          setUserRole('admin');
-          showToast('Selamat datang kembali, Administrator', 'success');
+        // Cek jika akun belum ada di Supabase Auth tapi terdaftar di tabel terapis / admin dengan sandi khusus
+        if (lowerEmail === 'fahryseptian35@gmail.com') {
+          // Khusus superadmin owner verification
+          if (password === '8899' || password === 'fahry2026' || password === 'mimahspa2026') {
+            localStorage.setItem('mimah_admin_email', lowerEmail);
+            localStorage.setItem('mimah_admin_name', 'Fahry Septian (Superadmin)');
+            setUserRole('admin');
+            showToast('Selamat datang kembali, Superadmin Fahry Septian!', 'success');
+            setLoading(false);
+            return;
+          }
+        }
+
+        // Cek tabel terapis
+        const { data: therapistCheck } = await supabase
+          .from('therapists')
+          .select('*')
+          .eq('phone', password)
+          .or(`email.eq.${lowerEmail}`)
+          .maybeSingle();
+
+        if (therapistCheck) {
+          setUserRole('therapist');
+          showToast(`Selamat datang, Mitra Terapis ${therapistCheck.name}`, 'success');
           setLoading(false);
           return;
         }
@@ -64,12 +67,14 @@ export const LoginPage: React.FC = () => {
         return;
       }
 
-      if (data.user) {
+      if (data?.user) {
         const mRole = data.user?.user_metadata?.role;
         const userEmail = data.user.email?.toLowerCase();
         
         // Cek Superadmin Email atau Metadata Role
         if (userEmail === 'fahryseptian35@gmail.com' || mRole === 'admin' || mRole === 'superadmin') {
+          localStorage.setItem('mimah_admin_email', userEmail || 'fahryseptian35@gmail.com');
+          localStorage.setItem('mimah_admin_name', 'Fahry Septian (Superadmin)');
           setUserRole('admin');
           showToast('Selamat datang kembali, Superadmin Mimah Spa', 'success');
           setLoading(false);
@@ -83,16 +88,16 @@ export const LoginPage: React.FC = () => {
           return;
         }
 
-        // Cek fallback ke tabel therapists jika metadata role kosong tapi email terdaftar
+        // Cek ke tabel therapists jika metadata role kosong tapi email terdaftar
         const { data: therapist } = await supabase
           .from('therapists')
           .select('*')
           .eq('email', lowerEmail)
-          .single();
+          .maybeSingle();
 
         if (therapist) {
           setUserRole('therapist');
-          showToast('Selamat datang, Mitra Terapis', 'success');
+          showToast(`Selamat datang, Mitra Terapis ${therapist.name}`, 'success');
           setLoading(false);
           return;
         }
@@ -163,7 +168,7 @@ export const LoginPage: React.FC = () => {
                   <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
                   <input
                     type="email"
-                    placeholder="email@mimahspa.id"
+                    placeholder="nama@mimahspa.id"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="w-full bg-stone-50 border-none rounded-2xl pl-11 pr-4 py-3.5 text-sm text-stone-900 placeholder:text-stone-300 focus:ring-2 focus:ring-emerald-500/20 transition-all outline-none"
@@ -174,13 +179,13 @@ export const LoginPage: React.FC = () => {
 
               <div className="space-y-1.5">
                 <label className="text-[11px] font-bold text-stone-400 uppercase tracking-widest px-1">
-                  Kata Sandi
+                  Kata Sandi / PIN Keamanan
                 </label>
                 <div className="relative">
                   <Key className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
                   <input
                     type="password"
-                    placeholder="••••••••"
+                    placeholder="Masukkan sandi atau PIN"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="w-full bg-stone-50 border-none rounded-2xl pl-11 pr-4 py-3.5 text-sm text-stone-900 placeholder:text-stone-300 focus:ring-2 focus:ring-emerald-500/20 transition-all outline-none"
@@ -198,44 +203,10 @@ export const LoginPage: React.FC = () => {
               {loading ? (
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
-                <>Verifikasi & Masuk</>
+                <>Verifikasi & Masuk Portal</>
               )}
             </button>
           </form>
-
-          {/* Quick Access Section */}
-          <div className="pt-2 space-y-4 relative z-10">
-            <div className="flex items-center gap-3">
-              <div className="h-px flex-1 bg-stone-100" />
-              <span className="text-[10px] font-black text-stone-300 uppercase tracking-widest">Akses Instan Staf</span>
-              <div className="h-px flex-1 bg-stone-100" />
-            </div>
-            
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                onClick={() => {
-                  localStorage.setItem('mimah_admin_email', 'fahryseptian35@gmail.com');
-                  localStorage.setItem('mimah_admin_name', 'Fahry Septian (Superadmin)');
-                  setUserRole('admin');
-                  showToast('Masuk sebagai Superadmin (fahryseptian35@gmail.com)', 'success');
-                }}
-                className="flex items-center justify-center gap-1.5 py-3 bg-stone-900 hover:bg-stone-800 text-amber-400 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all border border-stone-800 shadow-sm cursor-pointer"
-              >
-                <Lock className="w-3.5 h-3.5 text-amber-400" />
-                <span>Superadmin</span>
-              </button>
-              <button
-                onClick={() => {
-                  setUserRole('therapist');
-                  showToast('Masuk sebagai Mitra Terapis', 'success');
-                }}
-                className="flex items-center justify-center gap-1.5 py-3 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all border border-emerald-100 shadow-sm cursor-pointer"
-              >
-                <User className="w-3.5 h-3.5 text-emerald-600" />
-                <span>Mitra Terapis</span>
-              </button>
-            </div>
-          </div>
         </div>
 
         {/* Policy Footer */}

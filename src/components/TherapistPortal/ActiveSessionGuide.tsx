@@ -37,7 +37,6 @@ export const ActiveSessionGuide: React.FC<ActiveSessionGuideProps> = ({
   // Timer States
   const [secondsLeft, setSecondsLeft] = useState(durationMinutes * 60);
   const [isActive, setIsActive] = useState(true);
-  const [speedMultiplier, setSpeedMultiplier] = useState(1); // For quick demo
 
   // SOP Checklist States
   const [sopChecked, setSopChecked] = useState<Record<string, boolean>>({
@@ -86,14 +85,14 @@ export const ActiveSessionGuide: React.FC<ActiveSessionGuideProps> = ({
     let interval: any = null;
     if (isActive && secondsLeft > 0) {
       interval = setInterval(() => {
-        setSecondsLeft(prev => Math.max(0, prev - (1 * speedMultiplier)));
+        setSecondsLeft(prev => Math.max(0, prev - 1));
       }, 1000);
     } else if (secondsLeft === 0 && isActive) {
       setIsActive(false);
       showToast(`Sesi terapi untuk Ibu ${customerName} telah selesai! Berikan teh hangat.`, 'success');
     }
     return () => clearInterval(interval);
-  }, [isActive, secondsLeft, speedMultiplier, customerName, showToast]);
+  }, [isActive, secondsLeft, customerName, showToast]);
 
   const toggleSop = (id: string) => {
     setSopChecked(prev => {
@@ -133,12 +132,10 @@ export const ActiveSessionGuide: React.FC<ActiveSessionGuideProps> = ({
           <span className="text-[10px] font-black tracking-widest uppercase text-stone-700">Live Treatment Companion</span>
         </div>
         <div className="flex items-center gap-2">
-          {speedMultiplier > 1 && (
-            <span className="px-2.5 py-0.5 bg-amber-100 text-amber-800 border border-amber-200 text-[8px] font-black uppercase rounded-lg animate-bounce flex items-center gap-1">
-              <Zap className="w-2.5 h-2.5 text-amber-600 fill-amber-500" />
-              Demo: Speed {speedMultiplier}x
-            </span>
-          )}
+          <span className="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 border border-emerald-200 text-[8px] font-black uppercase rounded-lg flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
+            Active Session
+          </span>
         </div>
       </div>
 
@@ -201,28 +198,10 @@ export const ActiveSessionGuide: React.FC<ActiveSessionGuideProps> = ({
                 setIsActive(false);
                 showToast('Timer disetel ulang', 'info');
               }}
-              className="p-2.5 bg-stone-50 border border-stone-200 hover:bg-stone-100 text-stone-600 rounded-xl transition-all"
+              className="p-2.5 bg-stone-50 border border-stone-200 hover:bg-stone-100 text-stone-600 rounded-xl transition-all cursor-pointer"
               title="Reset Timer"
             >
               <RotateCcw className="w-4 h-4" />
-            </button>
-
-            {/* Quick Speedup (For App Demo testing) */}
-            <button
-              onClick={() => {
-                const nextSpeed = speedMultiplier === 1 ? 10 : speedMultiplier === 10 ? 60 : 1;
-                setSpeedMultiplier(nextSpeed);
-                showToast(`Mode Simulator: Kecepatan timer diatur ke ${nextSpeed}x`, 'info');
-              }}
-              className={`px-3 py-2 border rounded-xl text-[9px] font-black uppercase tracking-wider flex items-center gap-1 transition-all ${
-                speedMultiplier > 1 
-                  ? 'bg-amber-600 border-amber-500 text-white shadow-md shadow-amber-900/10' 
-                  : 'bg-stone-100 border-stone-200 text-stone-600 hover:bg-stone-200'
-              }`}
-              title="Percepat Timer untuk Demo"
-            >
-              <Zap className="w-3.5 h-3.5 fill-current" />
-              <span>{speedMultiplier === 1 ? 'Demo' : `${speedMultiplier}x`}</span>
             </button>
           </div>
         </div>
