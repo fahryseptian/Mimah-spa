@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { formatRupiah } from '../../utils/formatters';
+import { INITIAL_SERVICES } from '../../data/mockData';
 import { 
   ServiceItem, 
   Therapist, 
@@ -86,10 +87,10 @@ export const BookingWizard: React.FC = () => {
 
   // Step 1: Service & Preferences
   const [selectedService, setSelectedService] = useState<ServiceItem>(() => {
-    return selectedServiceForBooking || services[0];
+    return selectedServiceForBooking || services[0] || INITIAL_SERVICES[0];
   });
   const [selectedDuration, setSelectedDuration] = useState<number>(() => {
-    return selectedService.durationOptions[0]?.durationMinutes || 90;
+    return selectedService?.durationOptions?.[0]?.durationMinutes || 90;
   });
   const [selectedOil, setSelectedOil] = useState<string>('Minyak Zaitun + Aroma Lavender');
 
@@ -134,9 +135,12 @@ export const BookingWizard: React.FC = () => {
   useEffect(() => {
     if (selectedServiceForBooking) {
       setSelectedService(selectedServiceForBooking);
-      setSelectedDuration(selectedServiceForBooking.durationOptions[0]?.durationMinutes || 90);
+      setSelectedDuration(selectedServiceForBooking.durationOptions?.[0]?.durationMinutes || 90);
+    } else if (services && services.length > 0 && !selectedService) {
+      setSelectedService(services[0]);
+      setSelectedDuration(services[0].durationOptions?.[0]?.durationMinutes || 90);
     }
-  }, [selectedServiceForBooking]);
+  }, [selectedServiceForBooking, services]);
 
   useEffect(() => {
     if (selectedTherapistForBooking) {
@@ -149,11 +153,12 @@ export const BookingWizard: React.FC = () => {
   if (!isBookingModalOpen) return null;
 
   // Pricing calculations
-  const durationObj = useMemo(() => 
-    selectedService.durationOptions.find(d => d.durationMinutes === selectedDuration) || selectedService.durationOptions[0],
-    [selectedService, selectedDuration]
-  );
-  const servicePrice = durationObj ? durationObj.price : 150000;
+  const durationOptionsList = (selectedService?.durationOptions && selectedService.durationOptions.length > 0)
+    ? selectedService.durationOptions
+    : [{ durationMinutes: 90, price: 135000, popular: true }];
+
+  const durationObj = durationOptionsList.find(d => d.durationMinutes === selectedDuration) || durationOptionsList[0];
+  const servicePrice = durationObj ? durationObj.price : 135000;
 
   const chosenAddOns = useMemo(() => 
     addOns.filter(a => selectedAddOnIds.includes(a.id)),

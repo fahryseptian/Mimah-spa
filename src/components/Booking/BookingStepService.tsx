@@ -32,27 +32,35 @@ export const BookingStepService: React.FC<Props> = ({
           Pilih Menu Layanan Utama:
         </label>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          {services.map((s) => (
-            <button
-              key={s.id}
-              onClick={() => {
-                setSelectedService(s);
-                setSelectedDuration(s.durationOptions[0].durationMinutes);
-              }}
-              className={`p-3 rounded-xl border text-left flex items-start justify-between transition-all ${
-                selectedService.id === s.id
-                  ? 'border-emerald-600 bg-emerald-50 ring-1 ring-emerald-600 font-semibold'
-                  : 'border-stone-100 hover:border-stone-300 bg-white'
-              }`}
-            >
-              <div className="space-y-0.5">
-                <div className="text-xs font-bold text-stone-900">{s.title}</div>
-                <div className="text-[11px] text-stone-500 line-clamp-1">{s.tagline}</div>
-                <div className="text-[11px] font-semibold text-emerald-800">Mulai {formatRupiah(s.durationOptions[0].price)}</div>
-              </div>
-              {selectedService.id === s.id && <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />}
-            </button>
-          ))}
+          {services.map((s) => {
+            const sDurationOpts = (s.durationOptions && s.durationOptions.length > 0)
+              ? s.durationOptions
+              : [{ durationMinutes: 90, price: 135000, popular: true }];
+            const startingPrice = sDurationOpts[0]?.price || 100000;
+            const defaultDur = sDurationOpts[0]?.durationMinutes || 90;
+
+            return (
+              <button
+                key={s.id}
+                onClick={() => {
+                  setSelectedService(s);
+                  setSelectedDuration(defaultDur);
+                }}
+                className={`p-3 rounded-xl border text-left flex items-start justify-between transition-all ${
+                  selectedService.id === s.id
+                    ? 'border-emerald-600 bg-emerald-50 ring-1 ring-emerald-600 font-semibold'
+                    : 'border-stone-100 hover:border-stone-300 bg-white'
+                }`}
+              >
+                <div className="space-y-0.5">
+                  <div className="text-xs font-bold text-stone-900">{s.title}</div>
+                  <div className="text-[11px] text-stone-500 line-clamp-1">{s.tagline}</div>
+                  <div className="text-[11px] font-semibold text-emerald-800">Mulai {formatRupiah(startingPrice)}</div>
+                </div>
+                {selectedService.id === s.id && <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />}
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -62,7 +70,10 @@ export const BookingStepService: React.FC<Props> = ({
           Pilih Durasi Waktu:
         </label>
         <div className="grid grid-cols-3 gap-2.5">
-          {selectedService.durationOptions.map((opt) => (
+          {((selectedService.durationOptions && selectedService.durationOptions.length > 0)
+            ? selectedService.durationOptions
+            : [{ durationMinutes: 90, price: 135000, popular: true }]
+          ).map((opt) => (
             <button
               key={opt.durationMinutes}
               onClick={() => setSelectedDuration(opt.durationMinutes)}

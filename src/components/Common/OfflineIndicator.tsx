@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { CloudOff, Database, AlertTriangle } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+import { isSupabaseConfigured } from '../../lib/supabase';
 
 export function useOnlineStatus() {
   const [isOnline, setIsOnline] = useState(
@@ -26,8 +27,10 @@ export function useOnlineStatus() {
 export const OfflineIndicator: React.FC = () => {
   const isOnline = useOnlineStatus();
   const { isDbConnected } = useApp();
+  const isConfigured = isSupabaseConfigured();
 
-  if (isOnline && isDbConnected) return null;
+  // If connected or configured with Supabase, hide the mock indicator
+  if (isOnline && (isDbConnected || isConfigured)) return null;
 
   return (
     <div className="fixed bottom-4 left-4 z-50 flex flex-col gap-2">

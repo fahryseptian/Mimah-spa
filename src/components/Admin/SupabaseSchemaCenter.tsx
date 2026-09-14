@@ -135,6 +135,9 @@ CREATE POLICY "Public Read Vouchers" ON vouchers FOR SELECT USING (true);
 -- 7. ENABLE REALTIME BROADCAST
 ALTER PUBLICATION supabase_realtime ADD TABLE bookings;
 ALTER PUBLICATION supabase_realtime ADD TABLE therapists;
+ALTER PUBLICATION supabase_realtime ADD TABLE services;
+ALTER PUBLICATION supabase_realtime ADD TABLE vouchers;
+ALTER PUBLICATION supabase_realtime ADD TABLE reviews;
 
 -- SEED DATA AWAL (Contoh)
 INSERT INTO services (id, title, category, duration_minutes, price, is_popular)

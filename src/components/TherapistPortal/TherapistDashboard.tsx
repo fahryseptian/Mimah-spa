@@ -31,11 +31,17 @@ import {
   User,
   LogOut,
   BellRing,
-  Coffee
+  Coffee,
+  RotateCw,
+  Camera,
+  Upload,
+  Loader2,
+  X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useApp } from '../../context/AppContext';
 import { formatRupiah, getStatusBadge } from '../../utils/formatters';
+import { uploadImageToStorage } from '../../lib/imageOptimizer';
 import { PushNotificationSwitch } from './PushNotificationSwitch';
 import { supabase } from '../../lib/supabase';
 import { ActiveSessionGuide } from './ActiveSessionGuide';
@@ -48,7 +54,6 @@ export const TherapistDashboard: React.FC = () => {
     therapists, 
     updateTherapist,
     currentTherapistId, 
-    setCurrentTherapistId, 
     toggleTherapistStatus, 
     bookings, 
     updateBookingStatus,
@@ -108,6 +113,24 @@ export const TherapistDashboard: React.FC = () => {
   const targetProgress = dailyTarget > 0 && !isNaN(currentEarnings) ? Math.min(Math.max(0, (currentEarnings / dailyTarget) * 100), 100) : 0;
 
   const [activeTab, setActiveTab] = useState<'tugas' | 'performa' | 'jadwal' | 'kit' | 'materi'>('tugas');
+
+  // Interactive modal & action states
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [selectedTrainingMateri, setSelectedTrainingMateri] = useState<any | null>(null);
+  const [isRestockModalOpen, setIsRestockModalOpen] = useState(false);
+  const [restockItem, setRestockItem] = useState('Minyak Aromaterapi (Lavender/Lemongrass)');
+  const [restockNotes, setRestockNotes] = useState('');
+  const [isEmergencyModalOpen, setIsEmergencyModalOpen] = useState(false);
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  const [isUpdatingPhoto, setIsUpdatingPhoto] = useState(false);
+
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    setTimeout(() => {
+      setIsRefreshing(false);
+      showToast('Data tugas & status terapis berhasil disinkronkan!', 'success');
+    }, 600);
+  };
 
   // New States for Upsell and Cashout Features
   const [selectedOrderForAddon, setSelectedOrderForAddon] = useState<string | null>(null);
@@ -172,13 +195,46 @@ export const TherapistDashboard: React.FC = () => {
                   transition={{ repeat: Infinity, duration: 3 }}
                   className="absolute -inset-4 bg-emerald-500 rounded-full blur-2xl" 
                 />
-                <div className="relative p-1 bg-white/5 rounded-[2.5rem] border border-white/10">
+                <div className="relative p-1 bg-white/5 rounded-[2.5rem] border border-white/10 group/avatar">
                   <img
                     src={therapist.photoUrl}
                     alt={therapist.name}
                     referrerPolicy="no-referrer"
                     className="w-24 h-24 sm:w-32 sm:h-32 rounded-[2.2rem] object-cover shadow-2xl"
                   />
+                  {isUpdatingPhoto && (
+                    <div className="absolute inset-0 bg-black/60 rounded-[2.2rem] flex flex-col items-center justify-center text-white">
+                      <Loader2 className="w-6 h-6 animate-spin text-emerald-400" />
+                      <span className="text-[8px] font-black uppercase mt-1">Mengompres...</span>
+                    </div>
+                  )}
+                  <label 
+                    title="Ubah Foto Profil (Kompres Otomatis)"
+                    className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-stone-900 border border-white/20 text-white flex items-center justify-center cursor-pointer hover:bg-emerald-600 transition-all shadow-lg hover:scale-110"
+                  >
+                    <Camera className="w-3.5 h-3.5" />
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      className="hidden" 
+                      disabled={isUpdatingPhoto}
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        try {
+                          setIsUpdatingPhoto(true);
+                          const res = await uploadImageToStorage(file, 'avatars', 'therapists');
+                          updateTherapist(therapist.id, { photoUrl: res.url });
+                          showToast(`Foto profil berhasil diperbarui & dioptimasi (${(res.optimizedSize / 1024).toFixed(0)} KB)!`, 'success');
+                        } catch (err) {
+                          console.error(err);
+                          showToast('Gagal mengunggah foto profil', 'error');
+                        } finally {
+                          setIsUpdatingPhoto(false);
+                        }
+                      }}
+                    />
+                  </label>
                   <div className={`absolute -bottom-1 -right-1 w-10 h-10 rounded-2xl border-[6px] border-stone-950 flex items-center justify-center ${
                     isOnline ? 'bg-emerald-500 shadow-lg shadow-emerald-500/50' : 'bg-stone-700'
                   }`}>
@@ -218,24 +274,20 @@ export const TherapistDashboard: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex items-center gap-3 md:self-start">
-              <select
-                value={currentTherapistId}
-                onChange={(e) => setCurrentTherapistId(e.target.value)}
-                className="bg-white/5 text-stone-400 border border-white/10 rounded-2xl px-5 py-3 text-[11px] font-black uppercase tracking-widest outline-none hover:bg-white/10 transition-all cursor-pointer appearance-none min-w-[180px]"
-              >
-                {therapists.map(t => (
-                  <option key={t.id} value={t.id} className="bg-stone-900 text-white">Sesi: {t.name}</option>
-                ))}
-              </select>
+            <div className="flex items-center gap-2.5 md:self-start flex-wrap">
+              <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-[11px] font-black uppercase tracking-widest text-stone-300">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span>ID: {therapist.id}</span>
+              </div>
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="p-3.5 bg-white/5 border border-white/10 rounded-2xl text-stone-300 hover:bg-white/10 transition-all"
-                title="Refresh Status"
-                onClick={() => window.location.reload()}
+                className="p-3 bg-white/5 border border-white/10 rounded-2xl text-stone-300 hover:bg-white/10 transition-all cursor-pointer"
+                title="Sinkronisasi & Perbarui Data"
+                onClick={handleRefresh}
+                disabled={isRefreshing}
               >
-                <TrendingUp className="w-5 h-5" />
+                <RotateCw className={`w-5 h-5 transition-transform ${isRefreshing ? 'animate-spin text-emerald-400' : ''}`} />
               </motion.button>
             </div>
           </div>
@@ -501,7 +553,7 @@ export const TherapistDashboard: React.FC = () => {
                             <motion.a
                               whileHover={{ scale: 1.02 }}
                               whileTap={{ scale: 0.98 }}
-                              href={`https://wa.me/62${order.customerPhone.replace(/\D/g, '')}?text=Halo%20${encodeURIComponent(order.customerName)},%20saya%20${encodeURIComponent(therapist.name)}%20mitra%20terapis%20Mimah Spa.%20Saya%20akan%20menuju%20lokasi%20Anda.`}
+                              href={`https://wa.me/62${order.customerPhone.replace(/\D/g, '').replace(/^0/, '').replace(/^62/, '')}?text=Halo%20${encodeURIComponent(order.customerName)},%20saya%20${encodeURIComponent(therapist.name)}%20mitra%20terapis%20Mimah%20Spa.%20Saya%20akan%20menuju%20lokasi%20Anda.`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="flex-1 py-5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-[1.5rem] text-[11px] font-black uppercase tracking-widest flex items-center justify-center gap-3 shadow-2xl shadow-emerald-900/20 transition-all"
@@ -619,15 +671,65 @@ export const TherapistDashboard: React.FC = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {[
-                  { title: 'Teknik Mimah Signature', dur: '12 Menit', cat: 'Video Tutorial', icon: Play },
-                  { title: 'Protokol Kebersihan Alat', dur: '5 Halaman', cat: 'SOP Dasar', icon: ShieldCheck },
-                  { title: 'Etika Komunikasi Klien', dur: '8 Menit', cat: 'Soft Skill', icon: MessageCircle },
-                  { title: 'Penanganan Alergi Minyak', dur: '4 Halaman', cat: 'Keamanan', icon: AlertTriangle },
+                  {
+                    title: 'Teknik Mimah Signature',
+                    dur: '12 Menit',
+                    cat: 'Video Tutorial',
+                    icon: Play,
+                    desc: 'Kombinasi pijat tradisional Jawa & penekanan titik akupresur Sumatera Utara untuk meredakan ketegangan otot mendalam.',
+                    steps: [
+                      'Awali dengan gerakan effleurage lembut dari punggung bawah ke pundak selama 5 menit.',
+                      'Terapkan tekanan jempol perlahan di sepanjang sisi tulang belakang (hindari menekan tulang belakang langsung).',
+                      'Lakukan teknik kneading pada otot trapezius dan pundak dengan ritme santai.',
+                      'Tanyakan kepada klien secara berkala apakah intensitas tekanan sudah pas.'
+                    ]
+                  },
+                  {
+                    title: 'Protokol Kebersihan Alat',
+                    dur: '5 Halaman',
+                    cat: 'SOP Dasar',
+                    icon: ShieldCheck,
+                    desc: 'Standar sterilisasi perlengkapan sebelum dan sesudah sesi untuk memastikan higienitas bintang lima.',
+                    steps: [
+                      'Gunakan hand sanitizer berstandar medis di hadapan klien sebelum menyentuh perlengkapan.',
+                      'Bentangkan kain sprai sekali pakai (disposable sheet) di atas kasur/bed klien.',
+                      'Pastikan botol minyak terlapisi rapi dan tidak licin atau meninggalkan tetesan di lantai.',
+                      'Masukkan handuk kotor ke dalam laundry bag tertutup segera setelah sesi selesai.'
+                    ]
+                  },
+                  {
+                    title: 'Etika Komunikasi Klien',
+                    dur: '8 Menit',
+                    cat: 'Soft Skill',
+                    icon: MessageCircle,
+                    desc: 'Panduan tata krama profesional, batas privasi, dan kenyamanan pelanggan selama di kediaman mereka.',
+                    steps: [
+                      'Ucapkan salam dengan ramah dan perkenalkan diri sesuai nama di aplikasi Mimah Spa.',
+                      'Konfirmasi keluhan tubuh yang ingin difokuskan dan tanyakan riwayat cidera.',
+                      'Jaga ketenangan suasana ruangan, hindari membicarakan topik sensitif atau privasi keluarga klien.',
+                      'Ucapkan terima kasih dan minta izin sebelum merapikan perlengkapan terapi.'
+                    ]
+                  },
+                  {
+                    title: 'Penanganan Alergi Minyak',
+                    dur: '4 Halaman',
+                    cat: 'Keamanan',
+                    icon: AlertTriangle,
+                    desc: 'Langkah pencegahan dan penanganan jika klien memiliki kulit sensitif terhadap minyak aromaterapi.',
+                    steps: [
+                      'Lakukan uji patch test dengan setetes minyak di punggung tangan atau pergelangan klien.',
+                      'Tanyakan riwayat alergi minyak esensial atau aroma tertentu sebelum mulai.',
+                      'Gunakan minyak kelapa murni (VCO / Baby Oil tanpa pewangi) bila kulit klien sensitif.',
+                      'Jika muncul kemerahan, segera seka perlahan dengan handuk basah hangat dan berikan kompres sejuk.'
+                    ]
+                  },
                 ].map((materi, idx) => (
                   <motion.div 
                     key={idx}
                     whileHover={{ scale: 1.02 }}
-                    className="p-6 bg-stone-50 rounded-[2rem] border border-stone-100 flex items-center justify-between group cursor-pointer"
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => setSelectedTrainingMateri(materi)}
+                    className="p-6 bg-stone-50 hover:bg-emerald-50/40 rounded-[2rem] border border-stone-100 hover:border-emerald-200 flex items-center justify-between group cursor-pointer transition-all shadow-xs"
                   >
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition-all">
@@ -635,11 +737,11 @@ export const TherapistDashboard: React.FC = () => {
                       </div>
                       <div>
                         <div className="text-[8px] font-black text-stone-400 uppercase tracking-widest">{materi.cat}</div>
-                        <div className="text-sm font-bold text-stone-900">{materi.title}</div>
-                        <div className="text-[10px] text-stone-500 font-medium">{materi.dur}</div>
+                        <div className="text-sm font-bold text-stone-900 group-hover:text-emerald-900 transition-colors">{materi.title}</div>
+                        <div className="text-[10px] text-stone-500 font-medium">{materi.dur} • Klik untuk baca SOP</div>
                       </div>
                     </div>
-                    <ChevronRight className="w-5 h-5 text-stone-300 group-hover:text-emerald-600 transition-colors" />
+                    <ChevronRight className="w-5 h-5 text-stone-300 group-hover:text-emerald-600 group-hover:translate-x-1 transition-all" />
                   </motion.div>
                 ))}
               </div>
@@ -959,7 +1061,7 @@ export const TherapistDashboard: React.FC = () => {
             className="space-y-6"
           >
             <div className="bg-white rounded-[3rem] border border-stone-100 shadow-premium overflow-hidden">
-              <div className="p-8 border-b border-stone-50 bg-stone-50/50 flex items-center justify-between">
+              <div className="p-8 border-b border-stone-50 bg-stone-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-2xl bg-stone-900 flex items-center justify-center">
                     <PackageCheck className="w-6 h-6 text-emerald-500" />
@@ -969,8 +1071,19 @@ export const TherapistDashboard: React.FC = () => {
                     <p className="text-[10px] font-black text-stone-400 uppercase tracking-widest">Wajib dicek sebelum berangkat</p>
                   </div>
                 </div>
-                <div className="px-4 py-1.5 bg-emerald-100 text-emerald-800 rounded-full text-[10px] font-black uppercase tracking-widest border border-emerald-200">
-                  Lengkap
+                <div className="flex items-center gap-3">
+                  <div className="px-4 py-1.5 bg-emerald-100 text-emerald-800 rounded-full text-[10px] font-black uppercase tracking-widest border border-emerald-200">
+                    Lengkap
+                  </div>
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => setIsRestockModalOpen(true)}
+                    className="px-4 py-2 bg-stone-900 hover:bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Ajukan Refill Alat</span>
+                  </motion.button>
                 </div>
               </div>
               
@@ -1012,10 +1125,8 @@ export const TherapistDashboard: React.FC = () => {
         <motion.button
           whileHover={{ y: -3 }}
           whileTap={{ scale: 0.95 }}
-          onClick={() => {
-            if (confirm('Keluar dari portal terapis?')) logout();
-          }}
-          className="px-6 py-3.5 bg-stone-900 hover:bg-rose-600 text-white hover:text-white rounded-full flex items-center gap-2 text-xs font-black uppercase tracking-widest transition-all shadow-md"
+          onClick={() => setIsLogoutModalOpen(true)}
+          className="px-6 py-3.5 bg-stone-900 hover:bg-rose-600 text-white hover:text-white rounded-full flex items-center gap-2 text-xs font-black uppercase tracking-widest transition-all shadow-md cursor-pointer"
         >
           <LogOut className="w-4 h-4 text-rose-500" />
           <span className="hidden md:inline">Keluar Portal</span>
@@ -1024,10 +1135,9 @@ export const TherapistDashboard: React.FC = () => {
         <motion.button
           whileHover={{ y: -3 }}
           whileTap={{ scale: 0.95 }}
-          onClick={() => {
-            showToast('⚠️ SOS Aktif! CS Mimah sedang melacak GPS Anda & menghubungi nomor telepon Anda.', 'error');
-          }}
-          className="w-12 h-12 bg-rose-600 hover:bg-rose-500 text-white rounded-full flex items-center justify-center transition-all shadow-md"
+          onClick={() => setIsEmergencyModalOpen(true)}
+          className="w-12 h-12 bg-rose-600 hover:bg-rose-500 text-white rounded-full flex items-center justify-center transition-all shadow-md cursor-pointer"
+          title="Bantuan Darurat SOS Terapis"
         >
           <AlertTriangle className="w-5 h-5 animate-pulse" />
         </motion.button>
@@ -1120,6 +1230,295 @@ export const TherapistDashboard: React.FC = () => {
         onDecline={handleDeclineIncomingOrder}
         onClose={() => setIncomingOrderAlert(null)}
       />
+
+      {/* Training SOP Detail Modal */}
+      <AnimatePresence>
+        {selectedTrainingMateri && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="bg-white rounded-[2.5rem] shadow-2xl border border-stone-100 max-w-lg w-full overflow-hidden"
+            >
+              <div className="p-6 sm:p-8 border-b border-stone-100 bg-stone-50 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-emerald-500 text-white flex items-center justify-center">
+                    <selectedTrainingMateri.icon className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <span className="text-[9px] font-black uppercase tracking-widest text-emerald-700 bg-emerald-100/60 px-2.5 py-0.5 rounded-full">
+                      {selectedTrainingMateri.cat} • {selectedTrainingMateri.dur}
+                    </span>
+                    <h3 className="text-lg font-bold text-stone-900 font-serif-display mt-0.5">
+                      {selectedTrainingMateri.title}
+                    </h3>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setSelectedTrainingMateri(null)}
+                  className="p-2 text-stone-400 hover:text-stone-700 hover:bg-stone-200/50 rounded-xl transition-all cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="p-6 sm:p-8 space-y-5 max-h-[65vh] overflow-y-auto">
+                <p className="text-xs text-stone-600 font-medium leading-relaxed bg-stone-50 p-4 rounded-2xl border border-stone-100">
+                  {selectedTrainingMateri.desc}
+                </p>
+
+                <div className="space-y-3">
+                  <h4 className="text-[10px] font-black text-stone-400 uppercase tracking-widest">
+                    Langkah Kerja Standar (SOP)
+                  </h4>
+                  <div className="space-y-2.5">
+                    {selectedTrainingMateri.steps?.map((step: string, i: number) => (
+                      <div key={i} className="flex items-start gap-3 p-3.5 bg-stone-50/50 rounded-2xl border border-stone-100">
+                        <div className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 font-black text-[10px] flex items-center justify-center shrink-0 mt-0.5">
+                          {i + 1}
+                        </div>
+                        <p className="text-xs text-stone-700 font-semibold leading-relaxed">
+                          {step}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="pt-2">
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => {
+                      showToast(`Materi "${selectedTrainingMateri.title}" ditandai selesai dipelajari!`, 'success');
+                      setSelectedTrainingMateri(null);
+                    }}
+                    className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-emerald-900/10 cursor-pointer"
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>Tandai Selesai Dipelajari</span>
+                  </motion.button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Restock & Refill Tool Modal */}
+      <AnimatePresence>
+        {isRestockModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="bg-white rounded-[2.5rem] shadow-2xl border border-stone-100 max-w-lg w-full overflow-hidden"
+            >
+              <div className="p-6 sm:p-8 border-b border-stone-100 bg-stone-50 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-stone-900 text-emerald-400 flex items-center justify-center">
+                    <PackageCheck className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-stone-900 font-serif-display">
+                      Pengajuan Refill Alat / Minyak
+                    </h3>
+                    <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">
+                      Mitra: {therapist.name}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setIsRestockModalOpen(false)}
+                  className="p-2 text-stone-400 hover:text-stone-700 hover:bg-stone-200/50 rounded-xl transition-all cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="p-6 sm:p-8 space-y-5">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-stone-400 uppercase tracking-widest">
+                    Pilih Item Perlengkapan
+                  </label>
+                  <select
+                    value={restockItem}
+                    onChange={(e) => setRestockItem(e.target.value)}
+                    className="w-full p-4 bg-stone-50 border border-stone-200 rounded-2xl text-xs font-bold text-stone-900 focus:outline-none focus:border-emerald-500 cursor-pointer"
+                  >
+                    <option value="Minyak Aromaterapi (Lavender/Lemongrass)">Minyak Aromaterapi (Lavender/Lemongrass)</option>
+                    <option value="Kain Disposable Bed Sheet (Sprai Sekali Pakai)">Kain Disposable Bed Sheet (Sprai Sekali Pakai)</option>
+                    <option value="Handuk Bersih Steril (Paket 3 Pcs)">Handuk Bersih Steril (Paket 3 Pcs)</option>
+                    <option value="Masker Medis & Sarung Tangan Nitrile">Masker Medis & Sarung Tangan Nitrile</option>
+                    <option value="Balem Relaksasi Hangat & Minyak Kayu Putih">Balem Relaksasi Hangat & Minyak Kayu Putih</option>
+                    <option value="Alat Kerik Higienis Tanduk Asli">Alat Kerik Higienis Tanduk Asli</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-stone-400 uppercase tracking-widest">
+                    Catatan / Alasan (Opsional)
+                  </label>
+                  <textarea
+                    rows={3}
+                    placeholder="Contoh: Sisa 1 botol minyak untuk pemakaian 2 order berikutnya..."
+                    value={restockNotes}
+                    onChange={(e) => setRestockNotes(e.target.value)}
+                    className="w-full p-4 bg-stone-50 border border-stone-200 rounded-2xl text-xs font-medium text-stone-900 focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsRestockModalOpen(false)}
+                    className="flex-1 py-4 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-2xl text-[11px] font-black uppercase tracking-widest cursor-pointer"
+                  >
+                    Batal
+                  </button>
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => {
+                      showToast(`Permintaan refill "${restockItem}" telah diteruskan ke logistik Mimah Spa!`, 'success');
+                      setRestockNotes('');
+                      setIsRestockModalOpen(false);
+                    }}
+                    className="flex-1 py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-lg shadow-emerald-900/10 cursor-pointer"
+                  >
+                    Kirim Permintaan
+                  </motion.button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Emergency SOS Modal */}
+      <AnimatePresence>
+        {isEmergencyModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-rose-950/70 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="bg-white rounded-[2.5rem] shadow-2xl border border-rose-200 max-w-lg w-full overflow-hidden"
+            >
+              <div className="p-6 sm:p-8 border-b border-rose-100 bg-rose-50 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-2xl bg-rose-600 text-white flex items-center justify-center shadow-lg shadow-rose-600/30">
+                    <AlertTriangle className="w-6 h-6 animate-bounce" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-rose-950 font-serif-display">
+                      Protokol Darurat SOS Terapis
+                    </h3>
+                    <p className="text-[10px] font-black text-rose-600 uppercase tracking-widest">
+                      Bantuan Keamanan Lapangan Mimah Spa
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setIsEmergencyModalOpen(false)}
+                  className="p-2 text-stone-400 hover:text-stone-700 hover:bg-stone-200/50 rounded-xl transition-all cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="p-6 sm:p-8 space-y-6">
+                <div className="p-4 rounded-2xl bg-rose-50/70 border border-rose-200 text-xs text-rose-900 space-y-1.5">
+                  <p className="font-bold">⚠️ Gunakan tombol ini hanya jika Anda berada dalam situasi darurat:</p>
+                  <p className="text-[11px] text-rose-700 leading-relaxed">
+                    Kecelakaan lalu lintas, ancaman keselamatan fisik, pelecehan, atau kendala darurat medis di lokasi pelayanan.
+                  </p>
+                </div>
+
+                <div className="space-y-3">
+                  <a
+                    href="tel:081289214411"
+                    className="w-full py-4.5 bg-rose-600 hover:bg-rose-500 text-white rounded-2xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2.5 shadow-xl shadow-rose-600/25 transition-all cursor-pointer"
+                  >
+                    <Phone className="w-4 h-4 fill-white" />
+                    <span>Telepon Hotline Darurat 24 Jam</span>
+                  </a>
+
+                  <a
+                    href={`https://wa.me/6281289214411?text=EMERGENCY%20SOS!%20Saya%20terapis%20${encodeURIComponent(therapist.name)}%20(ID:%20${encodeURIComponent(therapist.id)})%20membutuhkan%20bantuan%20darurat%20segera%20di%20lapangan!`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2.5 shadow-md transition-all cursor-pointer"
+                  >
+                    <MessageCircle className="w-4 h-4 fill-white" />
+                    <span>Kirim Pesan Darurat WhatsApp CS</span>
+                  </a>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      showToast('Status darurat dibatalkan. Tetap utamakan keselamatan kerja.', 'info');
+                      setIsEmergencyModalOpen(false);
+                    }}
+                    className="w-full py-3.5 bg-stone-100 hover:bg-stone-200 text-stone-600 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all cursor-pointer"
+                  >
+                    Saya Aman / Tutup Jendela
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Logout Confirmation Modal */}
+      <AnimatePresence>
+        {isLogoutModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="bg-white rounded-[2.5rem] shadow-2xl border border-stone-100 max-w-sm w-full overflow-hidden text-center p-6 sm:p-8 space-y-6"
+            >
+              <div className="w-16 h-16 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center mx-auto border border-rose-100 shadow-sm">
+                <LogOut className="w-8 h-8" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-xl font-bold text-stone-900 font-serif-display">
+                  Keluar dari Portal Terapis?
+                </h3>
+                <p className="text-xs text-stone-500 font-medium leading-relaxed">
+                  Anda akan keluar dari sesi workstation terapis <span className="font-bold text-stone-800">{therapist.name}</span> dan kembali ke halaman utama pelanggan.
+                </p>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsLogoutModalOpen(false)}
+                  className="flex-1 py-4 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all cursor-pointer"
+                >
+                  Batal
+                </button>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => {
+                    setIsLogoutModalOpen(false);
+                    logout();
+                  }}
+                  className="flex-1 py-4 bg-rose-600 hover:bg-rose-500 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-lg shadow-rose-600/25 transition-all cursor-pointer"
+                >
+                  Ya, Keluar
+                </motion.button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
     </div>
   );

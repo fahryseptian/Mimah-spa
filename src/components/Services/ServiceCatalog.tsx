@@ -104,8 +104,11 @@ export const ServiceCatalog: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {filteredServices.map((service) => {
           // Selected duration state for this specific card
-          const currentDuration = selectedDurationMap[service.id] || service.durationOptions[0].durationMinutes;
-          const currentDurationObj = service.durationOptions.find(d => d.durationMinutes === currentDuration) || service.durationOptions[0];
+          const durationOptions = (service.durationOptions && service.durationOptions.length > 0)
+            ? service.durationOptions
+            : [{ durationMinutes: 90, price: 135000, popular: true }];
+          const currentDuration = selectedDurationMap[service.id] || durationOptions[0].durationMinutes;
+          const currentDurationObj = durationOptions.find(d => d.durationMinutes === currentDuration) || durationOptions[0];
 
           return (
             <div
@@ -171,7 +174,7 @@ export const ServiceCatalog: React.FC = () => {
                   </div>
 
                   <div className="grid grid-cols-3 gap-3">
-                    {service.durationOptions.map((opt) => (
+                    {durationOptions.map((opt) => (
                       <button
                         key={opt.durationMinutes}
                         onClick={() => setSelectedDurationMap({

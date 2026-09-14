@@ -9,17 +9,21 @@ import {
   Tag,
   Image as ImageIcon,
   Sparkles,
-  ChevronRight
+  ChevronRight,
+  Upload,
+  Loader2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useApp } from '../../context/AppContext';
 import { ServiceItem, ServiceCategory } from '../../types';
 import { formatRupiah } from '../../utils/formatters';
+import { uploadImageToStorage } from '../../lib/imageOptimizer';
 
 export const ServiceManagement: React.FC = () => {
-  const { services, addService, updateService, deleteService } = useApp();
+  const { services, addService, updateService, deleteService, showToast } = useApp();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingService, setEditingService] = useState<ServiceItem | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   // Form State
   const [title, setTitle] = useState('');
@@ -47,8 +51,8 @@ export const ServiceManagement: React.FC = () => {
     setTagline(service.tagline);
     setCategory(service.category);
     setDescription(service.description);
-    setPrice(service.durationOptions[0]?.price || 0);
-    setDuration(service.durationOptions[0]?.durationMinutes || 60);
+    setPrice(service.durationOptions?.[0]?.price || 100000);
+    setDuration(service.durationOptions?.[0]?.durationMinutes || 60);
     setImage(service.image);
     setIsModalOpen(true);
   };
@@ -131,7 +135,7 @@ export const ServiceManagement: React.FC = () => {
                 <div className="absolute bottom-5 left-5 right-5 text-white space-y-1">
                   <h4 className="text-lg font-bold font-serif-display leading-tight">{service.title}</h4>
                   <div className="flex items-center gap-3 text-[10px] font-bold text-white/70">
-                    <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {service.durationOptions[0]?.durationMinutes} Min</span>
+                    <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {service.durationOptions?.[0]?.durationMinutes || 90} Min</span>
                     <span className="w-1 h-1 rounded-full bg-white/30" />
                     <span className="flex items-center gap-1"><Sparkles className="w-3 h-3" /> Home Service</span>
                   </div>
@@ -145,7 +149,7 @@ export const ServiceManagement: React.FC = () => {
                   <div className="space-y-0.5">
                     <div className="text-[9px] font-black text-stone-400 uppercase tracking-widest">Harga Retail</div>
                     <div className="text-lg font-black text-emerald-700 tracking-tighter">
-                      {formatRupiah(service.durationOptions[0]?.price || 0)}
+                      {formatRupiah(service.durationOptions?.[0]?.price || 0)}
                     </div>
                   </div>
                   <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
@@ -238,11 +242,68 @@ export const ServiceManagement: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-stone-400 uppercase tracking-[0.1em] px-1">Tautan Foto Layanan (Unsplash)</label>
-                  <div className="relative">
-                    <ImageIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
-                    <input type="text" value={image} onChange={(e) => setImage(e.target.value)} className="w-full bg-stone-50 border-none rounded-2xl pl-11 pr-5 py-3.5 text-xs font-bold text-stone-900 outline-none focus:ring-2 focus:ring-emerald-500/20" placeholder="https://images.unsplash.com/..." />
+                <div className="space-y-3 p-5 bg-stone-50 rounded-3xl border border-stone-200/70">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[10px] font-black text-stone-500 uppercase tracking-[0.1em] px-1">Foto Sampul Layanan (Auto-Compress)</label>
+                    <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">WebP/JPEG High-Res</span>
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    {image && (
+                      <div className="relative w-20 h-20 rounded-2xl overflow-hidden shrink-0 border border-stone-200 shadow-sm">
+                        <img src={image} alt="Preview" className="w-full h-full object-cover" />
+                      </div>
+                    )}
+
+                    <div className="flex-1 space-y-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <label className="flex items-center justify-center gap-2 bg-white hover:bg-emerald-50/50 border border-dashed border-emerald-300 hover:border-emerald-500 rounded-xl px-4 py-2.5 text-xs font-bold text-emerald-700 cursor-pointer transition-all shadow-sm">
+                          {isUploading ? (
+                            <>
+                              <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-600" />
+                              <span>Mengompres...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Upload className="w-3.5 h-3.5 text-emerald-600" />
+                              <span>Upload File Foto</span>
+                            </>
+                          )}
+                          <input 
+                            type="file" 
+                            accept="image/*" 
+                            className="hidden" 
+                            disabled={isUploading}
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (!file) return;
+                              try {
+                                setIsUploading(true);
+                                const result = await uploadImageToStorage(file, 'services', 'catalog');
+                                setImage(result.url);
+                                showToast(`Foto layanan berhasil dioptimasi (${(result.optimizedSize / 1024).toFixed(0)} KB)`, 'success');
+                              } catch (err) {
+                                console.error(err);
+                                showToast('Gagal memproses foto', 'error');
+                              } finally {
+                                setIsUploading(false);
+                              }
+                            }} 
+                          />
+                        </label>
+
+                        <div className="relative">
+                          <ImageIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-stone-400" />
+                          <input 
+                            type="text" 
+                            value={image} 
+                            onChange={(e) => setImage(e.target.value)} 
+                            className="w-full bg-white border border-stone-200 rounded-xl pl-9 pr-3 py-2 text-xs font-bold text-stone-900 outline-none focus:ring-2 focus:ring-emerald-500/20 font-mono" 
+                            placeholder="Atau URL Unsplash..." 
+                          />
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
 

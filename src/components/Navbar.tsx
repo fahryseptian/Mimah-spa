@@ -20,7 +20,8 @@ import {
   Sliders,
   Tag,
   Coins,
-  Wallet
+  Wallet,
+  LogOut
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { PWAInstallButton } from './Common/PWAInstallButton';
@@ -42,7 +43,8 @@ export const Navbar: React.FC = () => {
     userPoints,
     setIsLoyaltyModalOpen,
     bookings = [],
-    therapistApplications = []
+    therapistApplications = [],
+    logout
   } = useApp();
 
   const [isScrolled, setIsScrolled] = useState(false);
@@ -74,8 +76,8 @@ export const Navbar: React.FC = () => {
               </>
             ) : userRole === 'admin' ? (
               <>
-                <span className="bg-amber-400 text-stone-900 px-2 py-0.5 rounded-full text-[8px] uppercase font-black">Admin Mode</span>
-                <p className="truncate opacity-90">Management & Control Panel Operasional Mimah Spa</p>
+                <span className="bg-amber-400 text-stone-900 px-2 py-0.5 rounded-full text-[8px] uppercase font-black">Superadmin Mode</span>
+                <p className="truncate opacity-90">Super Administrator (fahryseptian35@gmail.com) • Mimah Spa Command Center</p>
               </>
             ) : (
               <>
@@ -123,7 +125,7 @@ export const Navbar: React.FC = () => {
               <div className="flex items-center gap-2">
                 <h1 className="font-bold text-xl font-serif-display text-stone-900 leading-none">Mimah Spa</h1>
                 {userRole === 'admin' && (
-                  <span className="px-1.5 py-0.5 bg-stone-900 text-white rounded-md text-[8px] font-black uppercase tracking-wider">Admin</span>
+                  <span className="px-1.5 py-0.5 bg-stone-900 text-amber-400 border border-stone-800 rounded-md text-[8px] font-black uppercase tracking-wider">Superadmin</span>
                 )}
                 {userRole === 'therapist' && (
                   <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-md text-[9px] font-black uppercase tracking-wider">Mitra Terapis</span>
@@ -240,18 +242,34 @@ export const Navbar: React.FC = () => {
           {/* Desktop Right Actions */}
           <div className="hidden lg:flex items-center gap-3">
             {userRole === 'admin' ? (
-              <div className="flex items-center gap-2">
-                <div className="px-3.5 py-2 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl text-xs font-black uppercase tracking-wider flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <div className="flex items-center gap-2.5">
+                <div className="px-3.5 py-2 bg-stone-900 border border-stone-800 text-stone-200 rounded-2xl text-xs font-black uppercase tracking-wider flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
                   <span>Admin Mode</span>
                 </div>
+                <button
+                  onClick={() => logout()}
+                  className="px-4 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-2xl text-xs font-black uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer"
+                  title="Keluar dari mode admin"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span>Keluar</span>
+                </button>
               </div>
             ) : userRole === 'therapist' ? (
-              <div className="flex items-center gap-2">
-                <div className="px-3.5 py-2.5 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl text-xs font-bold flex items-center gap-2">
+              <div className="flex items-center gap-2.5">
+                <div className="px-3.5 py-2 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl text-xs font-bold flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
                   <span>Workstation Aktif</span>
                 </div>
+                <button
+                  onClick={() => logout()}
+                  className="px-4 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-2xl text-xs font-black uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer"
+                  title="Keluar dari portal terapis"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span>Keluar Portal</span>
+                </button>
               </div>
             ) : (
               <>
@@ -394,16 +412,27 @@ export const Navbar: React.FC = () => {
           </div>
 
           <div className="pt-4 border-t border-stone-100 flex flex-col gap-3">
-            {userRole === 'customer' && (
+            {userRole === 'customer' ? (
               <button
                 onClick={() => {
                   setActiveCustomerTab('login');
                   setIsMobileMenuOpen(false);
                 }}
-                className="w-full py-4 rounded-2xl text-center text-sm font-bold border border-stone-200 text-stone-500 hover:bg-stone-50 flex items-center justify-center gap-3 transition-all"
+                className="w-full py-4 rounded-2xl text-center text-sm font-bold border border-stone-200 text-stone-600 hover:bg-stone-50 flex items-center justify-center gap-3 transition-all cursor-pointer"
               >
-                <Settings className="w-5 h-5" />
+                <Settings className="w-5 h-5 text-stone-500" />
                 <span>Masuk Portal Staf</span>
+              </button>
+            ) : (
+              <button
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  logout();
+                }}
+                className="w-full py-4 rounded-2xl text-center text-sm font-black uppercase tracking-wider bg-rose-50 border border-rose-200 text-rose-700 hover:bg-rose-100 flex items-center justify-center gap-3 transition-all cursor-pointer"
+              >
+                <LogOut className="w-5 h-5 text-rose-600" />
+                <span>Keluar dari {userRole === 'admin' ? 'Admin' : 'Portal Terapis'}</span>
               </button>
             )}
           </div>

@@ -64,11 +64,13 @@ export const UATSimulator: React.FC = () => {
 
     // STEP 1: Create Order
     setCurrentStep(0);
-    addLog('Simulasi Pelanggan: Memilih layanan Royal Heritage...', 'info');
+    const targetService = services[0] || { id: 'mimah-royal-heritage', title: 'Mimah Royal Heritage (Signature)' };
+    const targetTherapist = therapists[0] || { name: 'Siti Rahmawati' };
+    addLog(`Simulasi Pelanggan: Memilih layanan ${targetService.title}...`, 'info');
     
     const newBooking = createBooking({
-      serviceId: services[0].id,
-      serviceTitle: services[0].title,
+      serviceId: targetService.id,
+      serviceTitle: targetService.title,
       customerName: 'Test User UAT',
       customerPhone: '081234567890',
       customerGender: 'female',
@@ -90,7 +92,7 @@ export const UATSimulator: React.FC = () => {
     setCurrentStep(1);
     addLog('Simulasi Admin: Menugaskan Terapis...', 'info');
     updateBookingStatus(newBooking.id, 'confirmed');
-    addLog(`Admin telah mengonfirmasi pesanan & menugaskan Terapis ${therapists[0].name}.`, 'success');
+    addLog(`Admin telah mengonfirmasi pesanan & menugaskan Terapis ${targetTherapist.name}.`, 'success');
 
     await new Promise(r => setTimeout(r, 2000));
 

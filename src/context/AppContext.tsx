@@ -3,6 +3,7 @@ import confetti from 'canvas-confetti';
 import { Toaster, toast } from 'sonner';
 import { 
   Therapist, 
+  TherapistStatus,
   ServiceItem, 
   ServiceAddOn, 
   LocationZone, 
@@ -36,7 +37,7 @@ import {
   INITIAL_INVENTORY_ITEMS
 } from '../data/mockData';
 import { DEFAULT_TARIFF, generateBookingCode } from '../utils/formatters';
-import { supabase } from '../lib/supabase';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
 interface AppContextType {
   userRole: UserRole;
@@ -150,7 +151,7 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = React.useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [isDbConnected, setIsDbConnected] = useState(false);
+  const [isDbConnected, setIsDbConnected] = useState<boolean>(() => isSupabaseConfigured());
   const [lastStatusUpdate, setLastStatusUpdate] = useState<{ bookingId: string; bookingCode: string; status: BookingStatus } | null>(null);
   
   const clearLastStatusUpdate = () => setLastStatusUpdate(null);
@@ -204,8 +205,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   useEffect(() => {
     if (supabase) {
+      setIsDbConnected(true);
       supabase.auth.getSession().then(({ data: { session } }) => {
-        setIsDbConnected(true);
         setUser(session?.user ?? null);
         if (session?.user?.user_metadata?.role) {
           const mRole = session.user.user_metadata.role;
@@ -215,12 +216,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         }
         setLoading(false);
       }).catch(() => {
-        setIsDbConnected(false);
         setLoading(false);
       });
 
       const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-        setIsDbConnected(!!session);
         setUser(session?.user ?? null);
         if (session?.user?.user_metadata?.role) {
           const mRole = session.user.user_metadata.role;
@@ -307,19 +306,21 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           const mappedTherapists = therapistData.map((t: any) => ({
             id: t.id,
             name: t.name,
-            phone: t.phone,
-            photoUrl: t.photo || t.photoUrl,
-            gender: t.gender,
-            rating: t.rating,
-            reviewCount: t.review_count,
-            status: t.status,
-            baseCity: t.city || t.baseCity,
-            specialties: t.skills || t.specialties,
-            bio: t.bio,
-            joinedDate: t.joined_date,
-            commissionRate: t.commission_rate,
-            isTopTherapist: t.is_top_therapist,
-            completedOrders: t.completedOrders || 0,
+            phone: t.phone || '',
+            photoUrl: t.photo_url || t.photo || t.photoUrl || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=400',
+            gender: t.gender || 'female',
+            rating: Number(t.rating) || 5.0,
+            reviewCount: t.review_count || t.reviewCount || 0,
+            status: t.status || (t.is_available !== false ? 'online' : 'offline'),
+            isAvailable: t.is_available ?? t.isAvailable ?? true,
+            baseCity: t.city || t.baseCity || 'Medan',
+            specialties: Array.isArray(t.specialties) ? t.specialties : (Array.isArray(t.skills) ? t.skills : []),
+            certifications: Array.isArray(t.certifications) ? t.certifications : [],
+            bio: t.bio || '',
+            joinedDate: t.joined_date || t.joinedDate || '2023-01-01',
+            commissionRate: t.commission_rate || t.commissionRate || 0.7,
+            isTopTherapist: t.is_top_therapist ?? t.isTopTherapist ?? false,
+            completedOrders: t.completed_sessions || t.completedOrders || 0,
             totalHours: t.totalHours || 0,
             dailyEarnings: t.dailyEarnings || 0,
             monthlyEarnings: t.monthlyEarnings || 0,
@@ -337,7 +338,62 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           .order('title');
         
         if (serviceData && serviceData.length > 0) {
-          setServices(serviceData);
+          const mappedServices = serviceData.map((s: any) => {
+            let durationOpts = s.durationOptions || s.duration_options || [];
+            if (typeof durationOpts === 'string') {
+              try { durationOpts = JSON.parse(durationOpts); } catch (e) { durationOpts = []; }
+            }
+            if (!Array.isArray(durationOpts) || durationOpts.length === 0) {
+              durationOpts = [
+                { durationMinutes: s.duration_minutes || 90, price: s.price || 135000, popular: true }
+              ];
+            }
+
+            let benefitsList = s.benefits || [];
+            if (typeof benefitsList === 'string') {
+              try { benefitsList = JSON.parse(benefitsList); } catch (e) { benefitsList = []; }
+            }
+
+            let suitableList = s.suitableFor || s.suitable_for || [];
+            if (typeof suitableList === 'string') {
+              try { suitableList = JSON.parse(suitableList); } catch (e) { suitableList = []; }
+            }
+
+            let includesList = s.includes || [];
+            if (typeof includesList === 'string') {
+              try { includesList = JSON.parse(includesList); } catch (e) { includesList = []; }
+            }
+
+            let addOnsList = s.availableAddOns || s.available_add_ons || [];
+            if (typeof addOnsList === 'string') {
+              try { addOnsList = JSON.parse(addOnsList); } catch (e) { addOnsList = []; }
+            }
+
+            let gendersList = s.allowedGenders || s.allowed_genders || ['female'];
+            if (typeof gendersList === 'string') {
+              try { gendersList = JSON.parse(gendersList); } catch (e) { gendersList = ['female']; }
+            }
+
+            return {
+              id: s.id,
+              title: s.title || 'Layanan Spa',
+              tagline: s.tagline || '',
+              category: s.category || 'pijat_tradisional',
+              description: s.description || '',
+              benefits: Array.isArray(benefitsList) ? benefitsList : [],
+              suitableFor: Array.isArray(suitableList) ? suitableList : [],
+              includes: Array.isArray(includesList) ? includesList : [],
+              iconName: s.iconName || s.icon_name || 'Sparkles',
+              image: s.image || 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=700&auto=format&fit=crop&q=80',
+              durationOptions: durationOpts,
+              availableAddOns: Array.isArray(addOnsList) ? addOnsList : [],
+              allowedGenders: Array.isArray(gendersList) ? gendersList : ['female'],
+              isPopular: s.isPopular ?? s.is_popular ?? false
+            };
+          });
+          setServices(mappedServices);
+        } else {
+          setServices(INITIAL_SERVICES);
         }
 
         // Fetch Bookings
@@ -490,24 +546,156 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 ...b,
                 status: payload.new.status,
                 paymentStatus: payload.new.payment_status,
-                statusLogs: payload.new.status_logs
+                statusLogs: payload.new.status_logs,
+                totalAmount: payload.new.total_amount ?? b.totalAmount,
+                therapistId: payload.new.therapist_id ?? b.therapistId,
+                therapistName: payload.new.therapist_name ?? b.therapistName,
+                therapistPhoto: payload.new.therapist_photo ?? b.therapistPhoto,
               };
             }
             return b;
           }));
         })
+        .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'bookings' }, (payload) => {
+          setBookings(prev => prev.filter(b => b.id !== payload.old.id));
+        })
+        .subscribe();
+
+      // Realtime listener for therapist status & data sync across admin and portal
+      const therapistChannel = supabase
+        .channel('public:therapists')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'therapists' }, (payload) => {
+          if (payload.eventType === 'UPDATE' && payload.new) {
+            setTherapists(prev => prev.map(t => {
+              if (t.id === payload.new.id) {
+                return {
+                  ...t,
+                  status: payload.new.status || t.status,
+                  isAvailable: payload.new.is_available ?? (payload.new.status === 'online'),
+                  name: payload.new.name || t.name,
+                  phone: payload.new.phone || t.phone,
+                  photoUrl: payload.new.photo_url || payload.new.photo || t.photoUrl,
+                  commissionRate: payload.new.commission_rate ?? t.commissionRate
+                };
+              }
+              return t;
+            }));
+          } else if (payload.eventType === 'INSERT' && payload.new) {
+            const newT: Therapist = {
+              id: payload.new.id,
+              name: payload.new.name,
+              phone: payload.new.phone || '',
+              photoUrl: payload.new.photo_url || payload.new.photo || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=400',
+              gender: payload.new.gender || 'female',
+              age: payload.new.age || 28,
+              experienceYears: payload.new.experience_years || 3,
+              rating: Number(payload.new.rating) || 5.0,
+              reviewCount: payload.new.review_count || 0,
+              status: (payload.new.status as TherapistStatus) || 'online',
+              baseCity: payload.new.base_city || payload.new.city || 'Medan',
+              baseKecamatan: payload.new.base_kecamatan || 'Medan Baru',
+              operationalCities: ['Medan'],
+              specialties: Array.isArray(payload.new.specialties) ? payload.new.specialties : ['Mimah Signature'],
+              certifications: Array.isArray(payload.new.certifications) ? payload.new.certifications : [],
+              bio: payload.new.bio || '',
+              vaccinated: true,
+              isTopTherapist: payload.new.is_top_therapist || false,
+              equipmentProvided: ['Matras Portable', 'Essential Oils'],
+              joinedDate: payload.new.joined_date || '2024-01-01',
+              commissionRate: payload.new.commission_rate || 0.7,
+              completedOrders: payload.new.completed_sessions || 0,
+              totalHours: 0,
+              dailyEarnings: 0,
+              monthlyEarnings: 0,
+              assignedInventory: []
+            };
+            setTherapists(prev => {
+              if (prev.some(t => t.id === newT.id)) return prev;
+              return [newT, ...prev];
+            });
+          } else if (payload.eventType === 'DELETE' && payload.old) {
+            setTherapists(prev => prev.filter(t => t.id !== payload.old.id));
+          }
+        })
+        .subscribe();
+
+      // Realtime listener for services
+      const servicesChannel = supabase
+        .channel('public:services')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'services' }, (payload) => {
+          if (payload.eventType === 'UPDATE' && payload.new) {
+            setServices(prev => prev.map(s => {
+              if (s.id === payload.new.id) {
+                return {
+                  ...s,
+                  title: payload.new.title || s.title,
+                  category: payload.new.category || s.category,
+                  description: payload.new.description || s.description,
+                  image: payload.new.image_url || payload.new.image || s.image,
+                  isPopular: payload.new.is_popular ?? s.isPopular
+                };
+              }
+              return s;
+            }));
+          } else if (payload.eventType === 'DELETE' && payload.old) {
+            setServices(prev => prev.filter(s => s.id !== payload.old.id));
+          }
+        })
+        .subscribe();
+
+      // Realtime listener for vouchers & discounts
+      const vouchersChannel = supabase
+        .channel('public:vouchers')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'vouchers' }, (payload) => {
+          if (payload.eventType === 'INSERT' && payload.new) {
+            setVouchers(prev => {
+              if (prev.some(v => v.code === payload.new.code)) return prev;
+              return [payload.new as Voucher, ...prev];
+            });
+          } else if (payload.eventType === 'UPDATE' && payload.new) {
+            setVouchers(prev => prev.map(v => v.code === payload.new.code ? (payload.new as Voucher) : v));
+          } else if (payload.eventType === 'DELETE' && payload.old) {
+            setVouchers(prev => prev.filter(v => v.code !== payload.old.code));
+          }
+        })
+        .subscribe();
+
+      // Realtime listener for customer reviews & ratings
+      const reviewsChannel = supabase
+        .channel('public:reviews')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'reviews' }, (payload) => {
+          if (payload.new) {
+            setReviews(prev => {
+              if (prev.some(r => r.id === payload.new.id)) return prev;
+              return [payload.new as TherapistReview, ...prev];
+            });
+          }
+        })
         .subscribe();
 
       return () => {
         supabase.removeChannel(bookingChannel);
+        supabase.removeChannel(therapistChannel);
+        supabase.removeChannel(servicesChannel);
+        supabase.removeChannel(vouchersChannel);
+        supabase.removeChannel(reviewsChannel);
       };
     }
   }, [userRole]);
 
   const [activeBooking, setActiveBooking] = useState<BookingItem | null>(null);
+  
+  // Real-time synchronization for active booking in view
   useEffect(() => {
-    if (bookings.length > 0 && !activeBooking) {
-      setActiveBooking(bookings[0]);
+    if (bookings.length > 0) {
+      if (!activeBooking) {
+        setActiveBooking(bookings[0]);
+      } else {
+        const synced = bookings.find(b => b.id === activeBooking.id);
+        if (synced && (synced.status !== activeBooking.status || synced.paymentStatus !== activeBooking.paymentStatus || synced.therapistId !== activeBooking.therapistId)) {
+          setActiveBooking(synced);
+        }
+      }
     }
   }, [bookings, activeBooking]);
   const [selectedTherapistForBooking, setSelectedTherapistForBooking] = useState<Therapist | null>(null);
@@ -1338,13 +1526,18 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     // Background Supabase Sync
     if (supabase && updatedRecord) {
       const rec = updatedRecord as Therapist;
+      const isOnline = rec.status === 'online';
       supabase.from('therapists').update({
         name: rec.name,
         phone: rec.phone,
+        photo_url: rec.photoUrl,
         photo: rec.photoUrl,
         gender: rec.gender,
         status: rec.status,
+        is_available: isOnline,
+        base_city: rec.baseCity,
         city: rec.baseCity,
+        specialties: rec.specialties,
         skills: rec.specialties,
         bio: rec.bio,
         commission_rate: rec.commissionRate,
@@ -1370,10 +1563,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const toggleTherapistStatus = (id: string) => {
-    let nextStatus: Therapist['status'] = 'offline';
+    let nextStatus: TherapistStatus = 'offline';
     setTherapists(prev => prev.map(t => {
       if (t.id === id) {
-        nextStatus = t.status === 'online' ? 'offline' : 'online';
+        nextStatus = (t.status === 'online' ? 'offline' : 'online') as TherapistStatus;
         showToast(`Status ${t.name} diubah menjadi ${nextStatus.toUpperCase()}`, 'info');
         return { ...t, status: nextStatus };
       }
@@ -1382,7 +1575,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
     // Background Supabase Sync
     if (supabase) {
-      supabase.from('therapists').update({ status: nextStatus }).eq('id', id).then(({ error }) => {
+      const isAvail = (nextStatus as string) === 'online';
+      supabase.from('therapists').update({ 
+        status: nextStatus,
+        is_available: isAvail
+      }).eq('id', id).then(({ error }) => {
         if (error) console.error('Supabase therapist status toggle error:', error.message);
         else console.log('Therapist status successfully updated in Supabase');
       });
@@ -1738,18 +1935,18 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       localStorage.removeItem('nsc_user_role');
       localStorage.removeItem('mimah_points');
       
-      // Reset state
+      // Reset state immediately to customer view
       setUserRole('customer');
       setUser(null);
       setActiveAdminTab('analytics');
       setActiveCustomerTab('katalog');
       
-      showToast('Berhasil keluar dari sesi.', 'info');
+      showToast('Berhasil keluar dari portal & kembali ke mode pelanggan.', 'info');
       
-      // Hard reset to clear everything and force App.tsx to re-evaluate
-      setTimeout(() => {
-        window.location.replace('/');
-      }, 300);
+      // Smooth scroll to top
+      if (typeof window !== 'undefined') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
     }
   };
 

@@ -34,11 +34,15 @@ import {
   User,
   Zap,
   Activity,
-  Database
+  Database,
+  Image as ImageIcon,
+  Upload,
+  Loader2
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { Therapist, TransportTariffConfig, Voucher } from '../../types';
 import { formatRupiah } from '../../utils/formatters';
+import { uploadImageToStorage } from '../../lib/imageOptimizer';
 import { AnalyticsDashboard } from './AnalyticsDashboard';
 import { FinanceDashboard } from './FinanceDashboard';
 import { CustomerCRM } from './CustomerCRM';
@@ -117,24 +121,27 @@ export const AdminManagement: React.FC = () => {
   const [formCertYear, setFormCertYear] = useState(2022);
   const [formBio, setFormBio] = useState('');
   const [formCommission, setFormCommission] = useState(75);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
 
   // Tariff & WhatsApp config local form
   const [tempTariff, setTempTariff] = useState<TransportTariffConfig>(tariffConfig);
   const [tempWhatsapp, setTempWhatsapp] = useState<string>(whatsappNumber);
 
-  // Calculation metrics
-  const totalOmzet = bookings.reduce((sum, b) => sum + (b.status === 'completed' ? b.totalAmount : 0), 0) || 24500000;
+  // Calculation metrics (Realtime Dynamic Sum)
+  const completedBookings = bookings.filter(b => b.status === 'completed');
+  const totalOmzet = completedBookings.reduce((sum, b) => sum + b.totalAmount, 0);
   
-  // Calculate platform fee more accurately based on therapist commission rates
-  const platformFee = bookings.reduce((sum, b) => {
-    if (b.status !== 'completed') return sum;
+  // Calculate platform fee accurately based on therapist commission rates
+  const platformFee = completedBookings.reduce((sum, b) => {
     const therapist = therapists.find(t => t.id === b.therapistId);
     const rate = therapist ? therapist.commissionRate : 0.75;
     return sum + Math.round(b.totalAmount * (1 - rate));
-  }, 0) || Math.round(totalOmzet * 0.35); // Default to ~35% if no bookings yet for demo
+  }, 0);
   
   const therapistPayouts = totalOmzet - platformFee;
   const activeTherapistsCount = therapists.filter(t => t.status === 'online').length;
+  const activeInSessionCount = bookings.filter(b => b.status === 'in_session').length;
+  const pendingOrdersCount = bookings.filter(b => b.status === 'pending' || b.status === 'confirmed').length;
   const avgRating = (therapists.reduce((sum, t) => sum + t.rating, 0) / (therapists.length || 1)).toFixed(2);
 
   const exportTransactionsToCSV = () => {
@@ -314,31 +321,20 @@ export const AdminManagement: React.FC = () => {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            <div className="flex items-center gap-2 bg-stone-800/50 p-1.5 rounded-2xl border border-stone-700/50 mr-2">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setActiveAdminTab('profile')}
-                className={`p-2.5 rounded-xl transition-all flex items-center gap-2 ${
-                  activeAdminTab === 'profile' 
-                    ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-900/20' 
-                    : 'text-stone-400 hover:text-white hover:bg-stone-700'
-                }`}
-                title="Profil Admin"
-              >
-                <User className="w-4 h-4" />
-                <span className="text-[10px] font-black uppercase tracking-wider hidden sm:inline">Admin</span>
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => logout()}
-                className="p-2.5 text-stone-400 hover:text-rose-400 hover:bg-rose-900/20 rounded-xl transition-all"
-                title="Logout"
-              >
-                <LogOut className="w-4 h-4" />
-              </motion.button>
-            </div>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setActiveAdminTab('profile')}
+              className={`px-4 py-3 rounded-2xl border transition-all flex items-center gap-2 ${
+                activeAdminTab === 'profile' 
+                  ? 'bg-emerald-600 text-white border-emerald-500 shadow-lg shadow-emerald-900/20' 
+                  : 'bg-stone-800/50 text-amber-400 border-stone-700/50 hover:text-white hover:bg-stone-750'
+              }`}
+              title="Profil Superadmin"
+            >
+              <User className="w-4 h-4" />
+              <span className="text-[10px] font-black uppercase tracking-wider">Superadmin</span>
+            </motion.button>
             <button
               onClick={handleOpenAdd}
               className="px-6 py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl text-[11px] font-black uppercase tracking-widest flex items-center gap-2.5 shadow-lg shadow-emerald-900/40 transition-all active:scale-[0.98]"
@@ -356,21 +352,28 @@ export const AdminManagement: React.FC = () => {
         {/* Today's Ticker */}
         <div className="lg:col-span-8 bg-white rounded-3xl border border-stone-100 shadow-sm p-5 flex flex-col sm:flex-row items-center gap-6">
           <div className="flex items-center gap-4 border-r border-stone-100 pr-6 shrink-0 w-full sm:w-auto">
-            <div className="w-12 h-12 rounded-2xl bg-stone-900 text-emerald-500 flex items-center justify-center shadow-lg">
+            <div className="w-12 h-12 rounded-2xl bg-stone-900 text-emerald-500 flex items-center justify-center shadow-lg relative">
               <TrendingUp className="w-6 h-6" />
+              <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white animate-pulse" />
             </div>
             <div>
-              <h3 className="text-xs font-black text-stone-900 uppercase tracking-widest">Live Activity</h3>
-              <p className="text-[10px] text-stone-400 font-medium">Status operasional hari ini</p>
+              <div className="flex items-center gap-1.5">
+                <h3 className="text-xs font-black text-stone-900 uppercase tracking-widest">Live Activity</h3>
+                <span className="px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-bold text-[8px] uppercase tracking-wider border border-emerald-200/60 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+                  Realtime
+                </span>
+              </div>
+              <p className="text-[10px] text-stone-400 font-medium">Status operasional terintegrasi</p>
             </div>
           </div>
           
-          <div className="flex-1 flex items-center justify-between w-full overflow-x-auto no-scrollbar gap-8 pb-1 sm:pb-0">
+          <div className="flex-1 flex items-center justify-between w-full overflow-x-auto no-scrollbar gap-6 pb-1 sm:pb-0">
             {[
-              { label: 'Total Order', val: bookings.length || 0, color: 'text-stone-900', icon: FileText },
-              { label: 'Aktif Sesi', val: bookings.filter(b => b.status === 'in_session').length || 0, color: 'text-blue-600', icon: Clock },
-              { label: 'Mitra Online', val: activeTherapistsCount, color: 'text-emerald-600', icon: Users },
-              { label: 'Rating Rata2', val: avgRating, color: 'text-amber-500', icon: Star },
+              { label: 'Total Order', val: bookings.length || 0, color: 'text-stone-900', icon: FileText, sub: `${completedBookings.length} selesai` },
+              { label: 'Aktif Sesi', val: activeInSessionCount, color: 'text-blue-600', icon: Clock, sub: `${pendingOrdersCount} antrean` },
+              { label: 'Mitra Online', val: activeTherapistsCount, color: 'text-emerald-600', icon: Users, sub: `dari ${therapists.length} terapis` },
+              { label: 'Rating Rata2', val: avgRating, color: 'text-amber-500', icon: Star, sub: 'Kepuasan 5.0' },
             ].map((stat, i) => (
               <div key={i} className="flex items-center gap-3 min-w-fit">
                 <div className={`w-8 h-8 rounded-lg bg-stone-50 flex items-center justify-center ${stat.color}`}>
@@ -379,6 +382,7 @@ export const AdminManagement: React.FC = () => {
                 <div>
                   <div className={`text-sm font-black ${stat.color}`}>{stat.val}</div>
                   <div className="text-[9px] font-bold text-stone-400 uppercase tracking-tighter whitespace-nowrap">{stat.label}</div>
+                  <div className="text-[8px] font-semibold text-stone-400">{stat.sub}</div>
                 </div>
               </div>
             ))}
@@ -391,10 +395,17 @@ export const AdminManagement: React.FC = () => {
             <span className="text-7xl font-extrabold font-serif-display">Rp</span>
           </div>
           <div className="relative z-10 space-y-1">
-            <div className="text-[9px] font-black text-emerald-200 uppercase tracking-widest">Total Gross Omzet</div>
+            <div className="flex items-center justify-between">
+              <div className="text-[9px] font-black text-emerald-200 uppercase tracking-widest">Total Gross Omzet</div>
+              <span className="text-[8px] font-bold bg-white/20 px-2 py-0.5 rounded-full text-white backdrop-blur-sm">
+                {completedBookings.length} Order Selesai
+              </span>
+            </div>
             <div className="text-2xl font-black tracking-tighter">{formatRupiah(totalOmzet)}</div>
             <div className="flex items-center justify-between pt-2">
-              <span className="text-[10px] font-bold text-emerald-100/70 italic">*Estimasi berjalan</span>
+              <span className="text-[10px] font-bold text-emerald-100/80">
+                Fee Platform: {formatRupiah(platformFee)}
+              </span>
               <button onClick={() => setActiveAdminTab('finance')} className="text-[10px] font-black uppercase underline decoration-2 underline-offset-4 hover:text-emerald-100 transition-colors">Detail Keuangan</button>
             </div>
           </div>
@@ -1109,7 +1120,12 @@ export const AdminManagement: React.FC = () => {
 
                 {/* Profile Photo Upload / Preset Section */}
                 <div className="p-6 bg-stone-50 rounded-3xl border border-stone-200/60 space-y-4">
-                  <label className="text-[10px] font-black text-stone-500 uppercase px-1">Foto Profil Terapis</label>
+                  <div className="flex items-center justify-between">
+                    <label className="text-[10px] font-black text-stone-500 uppercase px-1">Foto Profil Terapis (Auto Optimize & WebP/JPEG)</label>
+                    <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
+                      Auto-Compress & Resizing
+                    </span>
+                  </div>
                   
                   <div className="flex flex-col sm:flex-row items-center gap-6">
                     {/* Image Preview Container */}
@@ -1122,50 +1138,67 @@ export const AdminManagement: React.FC = () => {
                           (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&auto=format&fit=crop&q=80';
                         }}
                       />
-                      <span className="absolute -bottom-2 -right-2 px-2.5 py-1 bg-emerald-600 text-white text-[8px] font-black uppercase rounded-lg tracking-wider border border-white">
-                        Preview
-                      </span>
+                      {isUploadingPhoto ? (
+                        <div className="absolute inset-0 bg-black/60 rounded-3xl flex flex-col items-center justify-center text-white">
+                          <Loader2 className="w-6 h-6 animate-spin text-emerald-400" />
+                          <span className="text-[8px] font-black uppercase mt-1">Mengompres...</span>
+                        </div>
+                      ) : (
+                        <span className="absolute -bottom-2 -right-2 px-2.5 py-1 bg-emerald-600 text-white text-[8px] font-black uppercase rounded-lg tracking-wider border border-white">
+                          Preview
+                        </span>
+                      )}
                     </div>
 
-                    {/* URL Input & Preset Grid */}
+                    {/* File Upload & URL Input */}
                     <div className="flex-1 space-y-3 w-full">
-                      <div className="space-y-1">
-                        <span className="text-[9px] font-black text-stone-400 uppercase tracking-widest">URL Tautan Foto (Kustom)</span>
-                        <input 
-                          type="text" 
-                          value={formPhoto} 
-                          onChange={(e) => setFormPhoto(e.target.value)} 
-                          placeholder="https://images.unsplash.com/photo-..." 
-                          className="w-full bg-white border border-stone-200 rounded-xl px-4 py-2.5 text-xs font-bold text-stone-900 outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all font-mono"
-                        />
-                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {/* Direct File Upload with Auto-Compression */}
+                        <div className="space-y-1">
+                          <span className="text-[9px] font-black text-stone-500 uppercase tracking-widest flex items-center gap-1">
+                            <Upload className="w-3 h-3 text-emerald-600" />
+                            Upload Foto dari Galeri / HP
+                          </span>
+                          <label className="flex items-center justify-center gap-2 w-full bg-white hover:bg-emerald-50/50 border border-dashed border-emerald-300 hover:border-emerald-500 rounded-xl px-4 py-2.5 text-xs font-bold text-emerald-700 cursor-pointer transition-all shadow-sm">
+                            <Upload className="w-3.5 h-3.5 text-emerald-600" />
+                            <span>{isUploadingPhoto ? 'Memproses Foto...' : 'Pilih File Foto'}</span>
+                            <input 
+                              type="file" 
+                              accept="image/*" 
+                              className="hidden" 
+                              disabled={isUploadingPhoto}
+                              onChange={async (e) => {
+                                const file = e.target.files?.[0];
+                                if (!file) return;
+                                try {
+                                  setIsUploadingPhoto(true);
+                                  const result = await uploadImageToStorage(file, 'avatars', 'therapists');
+                                  setFormPhoto(result.url);
+                                  showToast(`Foto berhasil dioptimasi (${(result.optimizedSize / 1024).toFixed(0)} KB)`, 'success');
+                                } catch (err) {
+                                  console.error(err);
+                                  showToast('Gagal memproses foto', 'error');
+                                } finally {
+                                  setIsUploadingPhoto(false);
+                                }
+                              }} 
+                            />
+                          </label>
+                        </div>
 
-                      {/* Fast Preset Selector */}
-                      <div className="space-y-1.5">
-                        <span className="text-[9px] font-black text-stone-400 uppercase tracking-widest block">Pilih dari Foto Profesional Pilihan</span>
-                        <div className="grid grid-cols-6 gap-2">
-                          {[
-                            { gender: 'female', url: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80' },
-                            { gender: 'female', url: 'https://images.unsplash.com/photo-1594744803329-e58b31de8bf5?w=100&auto=format&fit=crop&q=80' },
-                            { gender: 'female', url: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=100&auto=format&fit=crop&q=80' },
-                            { gender: 'female', url: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=100&auto=format&fit=crop&q=80' },
-                            { gender: 'male', url: 'https://images.unsplash.com/photo-1566492031773-4f4e44671857?w=100&auto=format&fit=crop&q=80' },
-                            { gender: 'male', url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80' },
-                          ].map((preset, idx) => (
-                            <button
-                              key={idx}
-                              type="button"
-                              onClick={() => setFormPhoto(preset.url.replace('w=100', 'w=400'))}
-                              className={`relative rounded-xl overflow-hidden border-2 transition-all h-10 w-full hover:scale-105 hover:shadow ${
-                                formPhoto.includes(preset.url.split('?')[0])
-                                  ? 'border-emerald-500 ring-2 ring-emerald-500/20 animate-pulse'
-                                  : 'border-stone-200'
-                              }`}
-                            >
-                              <img src={preset.url} alt="" className="w-full h-full object-cover" />
-                              <span className={`absolute top-0 right-0 w-2 h-2 rounded-full ${preset.gender === 'female' ? 'bg-pink-500' : 'bg-blue-500'}`} />
-                            </button>
-                          ))}
+                        {/* Direct URL Input */}
+                        <div className="space-y-1">
+                          <span className="text-[9px] font-black text-stone-500 uppercase tracking-widest flex items-center gap-1">
+                            <ImageIcon className="w-3 h-3 text-stone-400" />
+                            Atau Tautan URL Foto
+                          </span>
+                          <input 
+                            type="text" 
+                            value={formPhoto} 
+                            onChange={(e) => setFormPhoto(e.target.value)} 
+                            placeholder="https://..." 
+                            className="w-full bg-white border border-stone-200 rounded-xl px-3 py-2 text-xs font-bold text-stone-900 outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all font-mono"
+                          />
                         </div>
                       </div>
                     </div>
