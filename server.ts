@@ -75,14 +75,7 @@ async function startServer() {
       
       if (authError) throw authError;
 
-      // 2. Insert Profile
-      const { error: profileError } = await supabaseAdmin
-        .from('profiles')
-        .insert([
-          { id: authData.user.id, email, role: 'therapist', ...profileData }
-        ]);
-
-      if (profileError) throw profileError;
+      // The therapist data insert is handled by the frontend via AppContext's addTherapist
 
       res.json({ success: true, user: authData.user });
     } catch (error: any) {

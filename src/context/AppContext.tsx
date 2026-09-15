@@ -249,7 +249,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [bookings, setBookings] = useState<BookingItem[]>([]);
   const [tariffConfig, setTariffConfig] = useState<TransportTariffConfig>(() => {
     const saved = localStorage.getItem('nsc_tariff_medan_v1');
-    return saved ? JSON.parse(saved) : DEFAULT_TARIFF;
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        parsed.freeRadiusKm = 0;
+        return parsed;
+      } catch (e) {}
+    }
+    return DEFAULT_TARIFF;
   });
 
   const [whatsappNumber, setWhatsappNumber] = useState<string>(() => {
@@ -1403,19 +1410,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         name: rec.name,
         phone: rec.phone,
         photo_url: rec.photoUrl,
-        photo: rec.photoUrl,
-        gender: rec.gender,
-        status: rec.status,
-        is_available: isOnline,
         city: rec.baseCity,
         specialties: rec.specialties,
-        skills: rec.specialties,
         bio: rec.bio,
-        commission_rate: rec.commissionRate,
-        is_top_therapist: rec.isTopTherapist
+        commission_rate: rec.commissionRate
       }).eq('id', id).then(({ error }) => {
-        if (error) console.error('Supabase therapist update error:', error.message);
-        else console.log('Therapist updates successfully synced to Supabase');
+        if (error) {
+          console.warn('Supabase therapist update notice:', error.message);
+        } else {
+          console.log('Therapist updates successfully synced to Supabase');
+        }
       });
     }
   };
@@ -1448,11 +1452,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     if (supabase) {
       const isAvail = (nextStatus as string) === 'online';
       supabase.from('therapists').update({ 
-        status: nextStatus,
         is_available: isAvail
       }).eq('id', id).then(({ error }) => {
-        if (error) console.error('Supabase therapist status toggle error:', error.message);
-        else console.log('Therapist status successfully updated in Supabase');
+        if (error) {
+          console.warn('Supabase therapist status toggle notice:', error.message);
+        } else {
+          console.log('Therapist status successfully updated in Supabase');
+        }
       });
     }
   };

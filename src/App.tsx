@@ -384,6 +384,44 @@ VITE_SUPABASE_ANON_KEY=Masukkan_Anon_Key_Supabase_Anda`}
       <LoyaltyRewardsModal />
       <TherapistDetailModal />
 
+      {/* Operator Quick Switcher Floating Bar (Instant Production Login Alternative) */}
+      <div className="fixed bottom-6 left-6 z-50 bg-stone-900/95 backdrop-blur-md text-white px-4 py-2.5 rounded-2xl shadow-2xl border border-stone-800 flex items-center gap-3 text-xs">
+        <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400 hidden sm:inline">Quick Operator:</span>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => setUserRole('customer')}
+            className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${
+              userRole === 'customer' ? 'bg-emerald-600 text-white' : 'bg-stone-800 text-stone-300 hover:bg-stone-700'
+            }`}
+          >
+            Pelanggan
+          </button>
+          <button
+            onClick={() => {
+              setUserRole('therapist');
+              toast.success('Beralih ke Portal Mitra Terapis');
+            }}
+            className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${
+              userRole === 'therapist' ? 'bg-emerald-600 text-white' : 'bg-stone-800 text-stone-300 hover:bg-stone-700'
+            }`}
+          >
+            Terapis
+          </button>
+          <button
+            onClick={() => {
+              localStorage.setItem('mimah_admin_email', 'fahryseptian35@gmail.com');
+              setUserRole('admin');
+              toast.success('Beralih ke Dashboard Superadmin');
+            }}
+            className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${
+              userRole === 'admin' ? 'bg-emerald-600 text-white' : 'bg-stone-800 text-stone-300 hover:bg-stone-700'
+            }`}
+          >
+            Admin
+          </button>
+        </div>
+      </div>
+
       {/* WhatsApp Floating Widget - Only for Customer */}
       {userRole === 'customer' && <WhatsAppFloatingButton />}
 

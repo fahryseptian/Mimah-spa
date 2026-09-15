@@ -289,6 +289,14 @@ export const TherapistDashboard: React.FC = () => {
               >
                 <RotateCw className={`w-5 h-5 transition-transform ${isRefreshing ? 'animate-spin text-emerald-400' : ''}`} />
               </motion.button>
+              <button
+                onClick={() => setIsLogoutModalOpen(true)}
+                className="px-4 py-3 bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white border border-rose-500/30 rounded-2xl text-[11px] font-black uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer shadow-lg"
+                title="Keluar dari Portal Terapis"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Keluar</span>
+              </button>
             </div>
           </div>
 

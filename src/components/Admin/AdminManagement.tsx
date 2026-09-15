@@ -344,6 +344,14 @@ export const AdminManagement: React.FC = () => {
               <span className="hidden sm:inline">Tambah Mitra Baru</span>
               <span className="sm:hidden">Tambah</span>
             </button>
+            <button
+              onClick={logout}
+              className="px-4 py-3.5 bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white border border-rose-500/30 rounded-2xl text-[11px] font-black uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer shadow-lg"
+              title="Keluar dari sesi Admin"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>Keluar</span>
+            </button>
           </div>
         </div>
       </div>

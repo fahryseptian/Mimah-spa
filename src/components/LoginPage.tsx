@@ -5,8 +5,8 @@ import { Lock, Mail, Key, CheckCircle2, ShieldAlert, Database, User, ShieldCheck
 import { UserRole } from '../types';
 
 export const LoginPage: React.FC = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('fahryseptian35@gmail.com');
+  const [password, setPassword] = useState('fahry2026');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { showToast, setUserRole } = useApp();

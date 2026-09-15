@@ -8,7 +8,7 @@ import {
 
 export const DEFAULT_TARIFF: TransportTariffConfig = {
   baseFare: 10000,
-  freeRadiusKm: 3,
+  freeRadiusKm: 0,
   perKmFare: 2500,
   nightSurcharge: 15000,
   weatherSurcharge: 10000,
