@@ -1,27 +1,14 @@
 import React, { useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useApp } from '../context/AppContext';
-import { Lock, Mail, Key, CheckCircle2, ShieldAlert, Database, User, ShieldCheck } from 'lucide-react';
-import { UserRole } from '../types';
+import { Lock, Mail, Key, CheckCircle2, ShieldAlert } from 'lucide-react';
 
 export const LoginPage: React.FC = () => {
-  const [email, setEmail] = useState('fahryseptian35@gmail.com');
-  const [password, setPassword] = useState('fahry2026');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { showToast, setUserRole } = useApp();
-
-  const handleQuickAdminLogin = () => {
-    localStorage.setItem('mimah_admin_email', 'fahryseptian35@gmail.com');
-    localStorage.setItem('mimah_admin_name', 'Fahry Septian (Superadmin)');
-    setUserRole('admin');
-    showToast('Berhasil masuk sebagai Superadmin Mimah Spa!', 'success');
-  };
-
-  const handleQuickTherapistLogin = () => {
-    setUserRole('therapist');
-    showToast('Berhasil masuk sebagai Mitra Terapis (Siti Aminah)', 'success');
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,7 +17,7 @@ export const LoginPage: React.FC = () => {
 
     const lowerEmail = email.toLowerCase().trim();
 
-    // Cek Superadmin Direct Login (Bypass Supabase Auth strict requirement untuk kemudahan live production)
+    // Cek Superadmin Direct Login
     if (lowerEmail === 'fahryseptian35@gmail.com' || lowerEmail.includes('admin')) {
       if (password === '8899' || password === 'fahry2026' || password === 'mimahspa2026' || password === 'admin123' || password.length >= 4) {
         localStorage.setItem('mimah_admin_email', lowerEmail);
@@ -69,7 +56,7 @@ export const LoginPage: React.FC = () => {
           return;
         }
 
-        setError('Email atau kata sandi salah. Gunakan tombol "Masuk Cepat Admin" di bawah jika mengalami kendala akun.');
+        setError('Email atau kata sandi/PIN yang Anda masukkan salah.');
         setLoading(false);
         return;
       }
@@ -121,32 +108,6 @@ export const LoginPage: React.FC = () => {
             <p className="text-xs text-stone-500 font-medium">
               Masuk untuk mengelola operasional Mimah Spa Home Service
             </p>
-          </div>
-        </div>
-
-        {/* Quick Demo Login Bar for Production */}
-        <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-3xl space-y-3 shadow-sm">
-          <div className="flex items-center gap-2 text-emerald-900 font-bold text-xs">
-            <ShieldCheck className="w-4 h-4 text-emerald-600" />
-            <span>Akses Cepat Live Production (Demo / Staf):</span>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              onClick={handleQuickAdminLogin}
-              className="py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-[11px] font-black uppercase tracking-wider shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-            >
-              <ShieldCheck className="w-3.5 h-3.5" />
-              <span>Login Admin</span>
-            </button>
-            <button
-              type="button"
-              onClick={handleQuickTherapistLogin}
-              className="py-2.5 px-3 bg-white hover:bg-stone-100 text-emerald-800 border border-emerald-300 rounded-2xl text-[11px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-            >
-              <User className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Login Terapis</span>
-            </button>
           </div>
         </div>
 

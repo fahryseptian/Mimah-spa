@@ -31,12 +31,10 @@ import {
   User,
   LogOut,
   BellRing,
-  Coffee,
   RotateCw,
-  Camera,
-  Upload,
-  Loader2,
-  X
+  X,
+  Banknote,
+  ArrowRight
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useApp } from '../../context/AppContext';
@@ -68,17 +66,6 @@ export const TherapistDashboard: React.FC = () => {
 
   const therapist = therapists.find(t => t.id === currentTherapistId) || therapists[0];
   const isOnline = therapist.status === 'online';
-  const isBreak = therapist.status === 'busy';
-
-  const handleToggleBreak = () => {
-    if (isBreak) {
-      updateTherapist(therapist.id, { status: 'online' });
-      showToast('Selesai istirahat! Status Anda kembali Siap Tugas (Online).', 'success');
-    } else {
-      updateTherapist(therapist.id, { status: 'busy' });
-      showToast('Mode Istirahat Aktif. Pesanan masuk dijeda sementara.', 'info');
-    }
-  };
 
   // State to track previous bookings length to trigger push notification
   const [prevBookingsCount, setPrevBookingsCount] = useState(bookings.length);
@@ -102,14 +89,42 @@ export const TherapistDashboard: React.FC = () => {
     setPrevBookingsCount(bookings.length);
   }, [bookings.length, prevBookingsCount]);
 
-  // Filter tasks assigned to this therapist or pending nearby
-  const assignedBookings = bookings.filter(b => b.therapistId === therapist.id || (!b.therapistId && b.city === therapist.baseCity));
+  // State for Real-Time GPS Tracking
+  const [therapistLocation, setTherapistLocation] = useState<{lat: number, lng: number} | null>(null);
+
+  // Filter tasks assigned to this therapist or pending nearby (now based on Real-Time GPS presence, not fixed baseCity)
+  const assignedBookings = bookings.filter(b => {
+    // Already assigned to this therapist
+    if (b.therapistId === therapist.id) return true;
+    
+    // If pending and unassigned, broadcast to online therapists based on GPS / Fair System
+    if (!b.therapistId && isOnline) {
+      // In a production backend, this would use Haversine distance (e.g. within 10km radius)
+      // Here we simulate it by opening the order to online therapists who have active GPS tracking
+      return true;
+    }
+    return false;
+  });
 
   const activeOrders = assignedBookings.filter(b => b.status !== 'completed' && b.status !== 'cancelled');
-  const completedOrders = assignedBookings.filter(b => b.status === 'completed');
+  const completedOrders = assignedBookings.filter(b => b.status === 'completed' && b.therapistId === therapist.id);
 
+  // Calculate historical all-time total earnings from completed orders
+  const totalHistoricalEarnings = completedOrders.reduce((sum, b) => {
+    const addonsTotal = b.selectedAddOns?.reduce((a, addon) => a + addon.price, 0) || 0;
+    const totalServicePrice = b.servicePrice + addonsTotal;
+    return sum + (totalServicePrice * (therapist.commissionRate || 0.75));
+  }, 0);
+
+  // Calculate total amount withdrawn or pending withdrawal
+  const totalCashedOut = cashoutRequests
+    .filter(r => r.therapistId === therapist.id && r.status !== 'rejected')
+    .reduce((sum, r) => sum + r.amount, 0);
+
+  // Calculate True Wallet Balance
+  const currentEarnings = Math.max(0, totalHistoricalEarnings - totalCashedOut);
+  
   const dailyTarget = 1000000;
-  const currentEarnings = therapist.dailyEarnings || 480000;
   const targetProgress = dailyTarget > 0 && !isNaN(currentEarnings) ? Math.min(Math.max(0, (currentEarnings / dailyTarget) * 100), 100) : 0;
 
   const [activeTab, setActiveTab] = useState<'tugas' | 'performa' | 'jadwal' | 'kit' | 'materi'>('tugas');
@@ -122,7 +137,6 @@ export const TherapistDashboard: React.FC = () => {
   const [restockNotes, setRestockNotes] = useState('');
   const [isEmergencyModalOpen, setIsEmergencyModalOpen] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
-  const [isUpdatingPhoto, setIsUpdatingPhoto] = useState(false);
 
   const handleRefresh = () => {
     setIsRefreshing(true);
@@ -150,6 +164,22 @@ export const TherapistDashboard: React.FC = () => {
     showToast(`Pesanan #${order.bookingCode} dilewati: ${reason}`, 'info');
     setIncomingOrderAlert(null);
   };
+
+  // Calculate Daily Income (Komisi Hari Ini)
+  const todayDateStr = new Date().toLocaleDateString('id-ID');
+  
+  const todayCompletedBookings = bookings.filter(b => {
+    if (b.therapistId !== therapist.id || b.status !== 'completed') return false;
+    const bookingDateStr = new Date(b.createdAt).toLocaleDateString('id-ID');
+    return bookingDateStr === todayDateStr;
+  });
+
+  const dailyIncome = todayCompletedBookings.reduce((sum, b) => {
+    const addonsTotal = b.selectedAddOns?.reduce((a, addon) => a + addon.price, 0) || 0;
+    const totalServicePrice = b.servicePrice + addonsTotal;
+    // Terapis mendapatkan persentase komisi dari total layanan
+    return sum + (totalServicePrice * (therapist.commissionRate || 0.75));
+  }, 0);
 
   const triggerTestOrderAlert = () => {
     const target = activeOrders[0] || bookings[0] || {
@@ -202,39 +232,6 @@ export const TherapistDashboard: React.FC = () => {
                     referrerPolicy="no-referrer"
                     className="w-24 h-24 sm:w-32 sm:h-32 rounded-[2.2rem] object-cover shadow-2xl"
                   />
-                  {isUpdatingPhoto && (
-                    <div className="absolute inset-0 bg-black/60 rounded-[2.2rem] flex flex-col items-center justify-center text-white">
-                      <Loader2 className="w-6 h-6 animate-spin text-emerald-400" />
-                      <span className="text-[8px] font-black uppercase mt-1">Mengompres...</span>
-                    </div>
-                  )}
-                  <label 
-                    title="Ubah Foto Profil (Kompres Otomatis)"
-                    className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-stone-900 border border-white/20 text-white flex items-center justify-center cursor-pointer hover:bg-emerald-600 transition-all shadow-lg hover:scale-110"
-                  >
-                    <Camera className="w-3.5 h-3.5" />
-                    <input 
-                      type="file" 
-                      accept="image/*" 
-                      className="hidden" 
-                      disabled={isUpdatingPhoto}
-                      onChange={async (e) => {
-                        const file = e.target.files?.[0];
-                        if (!file) return;
-                        try {
-                          setIsUpdatingPhoto(true);
-                          const res = await uploadImageToStorage(file, 'avatars', 'therapists');
-                          updateTherapist(therapist.id, { photoUrl: res.url });
-                          showToast(`Foto profil berhasil diperbarui & dioptimasi (${(res.optimizedSize / 1024).toFixed(0)} KB)!`, 'success');
-                        } catch (err) {
-                          console.error(err);
-                          showToast('Gagal mengunggah foto profil', 'error');
-                        } finally {
-                          setIsUpdatingPhoto(false);
-                        }
-                      }}
-                    />
-                  </label>
                   <div className={`absolute -bottom-1 -right-1 w-10 h-10 rounded-2xl border-[6px] border-stone-950 flex items-center justify-center ${
                     isOnline ? 'bg-emerald-500 shadow-lg shadow-emerald-500/50' : 'bg-stone-700'
                   }`}>
@@ -305,14 +302,14 @@ export const TherapistDashboard: React.FC = () => {
               <PushNotificationSwitch />
               <div className="flex items-center gap-3 px-2">
                 <div className="flex -space-x-3">
-                  {[1, 2, 3].map(i => (
-                    <div key={i} className="w-8 h-8 rounded-full border-2 border-stone-950 bg-stone-800 overflow-hidden shadow-xl">
-                      <img src={`https://i.pravatar.cc/100?img=${i + 10}`} alt="" className="w-full h-full object-cover grayscale opacity-50" />
+                  {therapists.filter(t => t.status === 'online').slice(0, 3).map((t, i) => (
+                    <div key={t.id || i} className="w-8 h-8 rounded-full border-2 border-stone-950 bg-stone-800 overflow-hidden shadow-xl">
+                      <img src={t.photoUrl || `https://i.pravatar.cc/100?img=${i + 10}`} alt={t.name} className="w-full h-full object-cover grayscale opacity-50" />
                     </div>
                   ))}
                 </div>
                 <p className="text-[10px] font-bold text-stone-500 leading-tight">
-                  <span className="text-stone-300">12 Mitra Online</span> sedang aktif di area ini.
+                  <span className="text-stone-300">{therapists.filter(t => t.status === 'online').length} Mitra Online</span> sedang aktif di area ini.
                 </p>
               </div>
             </div>
@@ -321,26 +318,55 @@ export const TherapistDashboard: React.FC = () => {
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={() => {
+                onClick={async () => {
                   if (!isOnline) {
-                    if (navigator.geolocation) {
+                    try {
+                      // 1. Mandatory Notification Check
+                      if ('Notification' in window) {
+                        try {
+                          let perm = Notification.permission;
+                          if (perm === 'default') {
+                            perm = await Notification.requestPermission();
+                          }
+                          if (perm === 'denied') {
+                            showToast('Gagal: Izin Notifikasi wajib diaktifkan.', 'error');
+                            alert('Sistem mewajibkan izin Notifikasi agar Anda tidak melewatkan pesanan baru. Harap aktifkan Notifikasi di browser Anda.');
+                            return; // Stop here, do not go online
+                          }
+                        } catch (e) {
+                          console.warn('Notifikasi error/diblokir oleh iframe:', e);
+                          showToast('Peringatan: Gagal memverifikasi Notifikasi', 'warning');
+                        }
+                      }
+
+                      // 2. Mandatory GPS Check
+                      if (!navigator.geolocation) {
+                        showToast('Gagal: Perangkat tidak mendukung GPS.', 'error');
+                        alert('Perangkat Anda tidak mendukung fitur GPS. Tidak bisa aktif (online).');
+                        return; // Stop here
+                      }
+
+                      showToast('Mengunci lokasi GPS secara real-time...', 'info');
                       navigator.geolocation.getCurrentPosition(
                         (position) => {
+                          setTherapistLocation({ lat: position.coords.latitude, lng: position.coords.longitude });
                           toggleTherapistStatus(therapist.id);
-                          showToast(`GPS Aktif (${position.coords.latitude.toFixed(4)}, ${position.coords.longitude.toFixed(4)}). Status Anda kini Online!`, 'success');
+                          showToast(`Sistem Aktif! Lokasi GPS terkunci (${position.coords.latitude.toFixed(4)}, ${position.coords.longitude.toFixed(4)}).`, 'success');
                         },
                         (error) => {
                           console.warn('GPS error:', error);
-                          toggleTherapistStatus(therapist.id);
-                          showToast('Peringatan: GPS tidak aktif. Status tetap Online.', 'success');
+                          showToast('Gagal: Izin GPS (Lokasi) wajib diaktifkan.', 'error');
+                          alert('Gagal mendeteksi lokasi (Izin Ditolak/Timeout). Anda WAJIB mengaktifkan izin GPS (Lokasi) pada browser untuk dapat Aktif dan menerima pesanan.');
+                          // DO NOT toggle status online here!
                         },
                         { timeout: 10000, enableHighAccuracy: true }
                       );
-                    } else {
-                      toggleTherapistStatus(therapist.id);
-                      showToast('Status Anda kini Online', 'success');
+                    } catch (err) {
+                      console.error('Error saat verifikasi izin:', err);
+                      showToast('Terjadi kesalahan fatal saat meminta izin perangkat.', 'error');
                     }
                   } else {
+                    setTherapistLocation(null);
                     toggleTherapistStatus(therapist.id);
                     showToast('Berhasil mematikan status (Offline)', 'success');
                   }
@@ -354,23 +380,35 @@ export const TherapistDashboard: React.FC = () => {
                 {isOnline ? <Power className="w-5 h-5" /> : <Play className="w-5 h-5 fill-current" />}
                 <span>{isOnline ? 'Matikan Status' : 'Aktifkan Status'}</span>
               </motion.button>
-              
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={handleToggleBreak}
-                className={`px-8 py-6 rounded-[2rem] border text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2.5 cursor-pointer ${
-                  isBreak 
-                    ? 'bg-amber-400 text-stone-950 border-amber-300 shadow-[0_20px_40px_-12px_rgba(251,191,36,0.4)] hover:bg-amber-300' 
-                    : 'bg-white/5 border-white/10 text-stone-300 hover:bg-white/10 hover:text-white'
-                }`}
-                title={isBreak ? 'Klik untuk mengakhiri waktu istirahat dan kembali online' : 'Klik untuk istirahat sementara'}
-              >
-                <Coffee className={`w-4 h-4 ${isBreak ? 'animate-bounce' : ''}`} />
-                <span>{isBreak ? 'Selesai Istirahat' : 'Istirahat'}</span>
-              </motion.button>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Daily Income Summary Card */}
+      <div className="bg-emerald-950 text-emerald-50 rounded-[2.5rem] p-6 sm:p-8 relative overflow-hidden shadow-[0_20px_40px_-12px_rgba(16,185,129,0.3)]">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/20 rounded-full blur-[80px] -mr-20 -mt-20 pointer-events-none" />
+        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-emerald-400">
+              <Banknote className="w-5 h-5" />
+              <h2 className="text-xs font-black uppercase tracking-[0.2em]">Komisi Hari Ini</h2>
+            </div>
+            <p className="text-4xl md:text-5xl font-black font-serif-display text-white">
+              {formatRupiah(dailyIncome)}
+            </p>
+            <p className="text-[11px] font-bold text-emerald-500 flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              Dari {todayCompletedBookings.length} pesanan selesai hari ini
+            </p>
+          </div>
+          <button 
+             onClick={() => setActiveTab('performa')}
+             className="px-6 py-4 bg-emerald-500 hover:bg-emerald-400 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg flex items-center gap-3 w-full md:w-auto justify-center"
+          >
+            Lihat Riwayat Saldo
+            <ArrowRight className="w-4 h-4" />
+          </button>
         </div>
       </div>
 
@@ -967,6 +1005,10 @@ export const TherapistDashboard: React.FC = () => {
                       const amount = parseFloat(cashoutAmount);
                       if (isNaN(amount) || amount <= 0) {
                         showToast('Masukkan jumlah penarikan yang valid', 'warning');
+                        return;
+                      }
+                      if (amount > currentEarnings) {
+                        showToast(`Saldo tidak cukup. Maksimal penarikan: ${formatRupiah(currentEarnings)}`, 'error');
                         return;
                       }
                       if (!cashoutAccountNo) {

@@ -1815,6 +1815,45 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
+  // Auto-cancel logic for pending bookings > 15 minutes
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const now = new Date().getTime();
+      const pendingBookings = bookings.filter(b => b.status === 'pending');
+      
+      pendingBookings.forEach(booking => {
+        const createdAt = new Date(booking.createdAt).getTime();
+        const diffMinutes = (now - createdAt) / (1000 * 60);
+        
+        if (diffMinutes >= 15) {
+          // Update status to cancelled
+          updateBookingStatus(
+            booking.id, 
+            'cancelled', 
+            'Dibatalkan otomatis oleh sistem (melewati batas waktu 15 menit tanpa konfirmasi terapis).'
+          );
+          
+          // Notify admin (if current user is admin)
+          if (userRole === 'admin') {
+            showToast(`Sistem: Pesanan ${booking.bookingCode} dibatalkan otomatis karena tidak ada respon terapis selama 15 menit. Harap hubungi pelanggan / tugaskan terapis lain!`, 'warning');
+            
+            // Auto WhatsApp to Admin (Simulation)
+            fetch('/api/send-wa', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                target: '081234567890', // Admin phone
+                message: `[MIMAH SPA - AUTO CANCEL ALERT]\n\nPesanan ${booking.bookingCode} atas nama ${booking.customerName} dibatalkan otomatis oleh sistem karena Terapis (${booking.therapistName || 'Tidak diketahui'}) tidak merespon/konfirmasi selama lebih dari 15 menit.\n\nHarap segera menugaskan terapis lain atau hubungi pelanggan!`
+              })
+            }).catch(e => console.error(e));
+          }
+        }
+      });
+    }, 60000); // Check every 1 minute
+
+    return () => clearInterval(interval);
+  }, [bookings, updateBookingStatus, userRole]);
+
   return (
     <AppContext.Provider
       value={{

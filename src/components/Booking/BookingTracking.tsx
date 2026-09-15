@@ -21,12 +21,43 @@ import {
   Car,
   ReceiptText
 } from 'lucide-react';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import L from 'leaflet';
 import { useApp } from '../../context/AppContext';
 import { supabase } from '../../lib/supabase';
 import { BookingItem, BookingStatus } from '../../types';
 import { formatRupiah, getStatusBadge, generateWhatsAppBookingMessage, generateGoogleCalendarUrl } from '../../utils/formatters';
-import { APIProvider, Map, AdvancedMarker, Pin } from '@vis.gl/react-google-maps';
 import { InvoiceModal } from './InvoiceModal';
+
+// Fix Leaflet icon issue
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+});
+
+// Create custom icons for map
+const customerIcon = new L.DivIcon({
+  html: `<div style="position:relative;">
+          <div style="position:absolute;top:-8px;left:-8px;right:-8px;bottom:-8px;background-color:rgba(16,185,129,0.2);border-radius:9999px;animation:pulse 2s cubic-bezier(0.4,0,0.6,1) infinite;"></div>
+          <div style="padding:10px;background-color:#059669;border-radius:16px;box-shadow:0 10px 15px -3px rgba(0,0,0,0.1);border:2px solid white;color:white;display:flex;align-items:center;justify-content:center;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+          </div>
+         </div>`,
+  className: '',
+  iconSize: [40, 40],
+  iconAnchor: [20, 20]
+});
+
+const therapistIcon = new L.DivIcon({
+  html: `<div style="padding:10px;background-color:#1c1917;border-radius:16px;box-shadow:0 10px 15px -3px rgba(0,0,0,0.1);border:2px solid white;color:#34d399;display:flex;align-items:center;justify-content:center;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/></svg>
+         </div>`,
+  className: '',
+  iconSize: [40, 40],
+  iconAnchor: [20, 20]
+});
 
 export const BookingTracking: React.FC = () => {
   const { 
@@ -217,62 +248,32 @@ export const BookingTracking: React.FC = () => {
           </div>
 
           {/* Real Map Integration */}
-          <div className="h-[350px] relative w-full border-b border-stone-100 group">
-            {GOOGLE_MAPS_API_KEY ? (
-              <Map
-                defaultCenter={customerPos}
-                defaultZoom={15}
-                mapId="DEMO_MAP_ID"
-                className="w-full h-full"
-                gestureHandling={'greedy'}
-                disableDefaultUI={true}
-                internalUsageAttributionIds={["gmp_mcp_codeassist_v1_aistudio"]}
-              >
-                {/* Customer Marker */}
-                <AdvancedMarker position={customerPos} title="Lokasi Anda">
-                  <div className="relative group">
-                    <div className="absolute -inset-4 bg-emerald-500/20 rounded-full animate-ping" />
-                    <div className="p-2.5 bg-emerald-600 rounded-2xl shadow-xl border-2 border-white transform hover:scale-110 transition-transform">
-                      <MapPin className="w-5 h-5 text-white" />
-                    </div>
-                    <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-stone-900 text-white text-[10px] px-2 py-1 rounded-lg whitespace-nowrap font-bold shadow-xl pointer-events-none">
-                      Lokasi Anda
-                    </div>
-                  </div>
-                </AdvancedMarker>
+          <div className="h-[350px] relative w-full border-b border-stone-100 group z-0">
+            <MapContainer 
+              center={[customerPos.lat, customerPos.lng]} 
+              zoom={15} 
+              style={{ height: '100%', width: '100%', zIndex: 0 }}
+              zoomControl={false}
+            >
+              <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+              {/* Customer Marker */}
+              <Marker position={[customerPos.lat, customerPos.lng]} icon={customerIcon}>
+                <Popup className="font-bold text-sm">Lokasi Anda</Popup>
+              </Marker>
 
-                {/* Therapist Marker (only if on the way) */}
-                {(currentBooking.status === 'therapist_on_the_way' || currentBooking.status === 'confirmed') && (
-                  <AdvancedMarker position={therapistPos} title="Lokasi Terapis">
-                      <div className="relative group">
-                      <div className="p-2.5 bg-stone-900 rounded-2xl shadow-xl border-2 border-white transform hover:scale-110 transition-transform">
-                        <Car className="w-5 h-5 text-emerald-400" />
-                      </div>
-                      <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 bg-stone-900 text-white text-[10px] px-2 py-1 rounded-lg whitespace-nowrap font-bold shadow-xl pointer-events-none">
-                        Terapis (OTW)
-                      </div>
-                    </div>
-                  </AdvancedMarker>
-                )}
-              </Map>
-            ) : (
-              <div className="w-full h-full bg-stone-100 flex flex-col items-center justify-center p-8 text-center space-y-4">
-                <div className="w-16 h-16 bg-white rounded-3xl shadow-sm flex items-center justify-center">
-                  <MapPin className="w-8 h-8 text-emerald-600 animate-pulse" />
-                </div>
-                <div className="space-y-1">
-                  <h4 className="text-sm font-bold text-stone-800">Pelacakan Rute Aktif</h4>
-                  <p className="text-[10px] text-stone-500 max-w-[280px]">Lokasi terapis terhubung langsung dengan sistem GPS penugasan Pos Medan.</p>
-                </div>
-                <div className="px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-xl text-[10px] font-bold border border-emerald-200/60 flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
-                  GPS Live Active
-                </div>
-              </div>
-            )}
+              {/* Therapist Marker (only if on the way) */}
+              {(currentBooking.status === 'therapist_on_the_way' || currentBooking.status === 'confirmed') && (
+                <Marker position={[therapistPos.lat, therapistPos.lng]} icon={therapistIcon}>
+                  <Popup className="font-bold text-sm">Terapis (OTW)</Popup>
+                </Marker>
+              )}
+            </MapContainer>
             
             {/* Map Overlay Stats */}
-            <div className="absolute top-6 left-6 z-10">
+            <div className="absolute top-6 left-6 z-[1000]">
               <div className="bg-white/90 backdrop-blur-md p-4 rounded-2xl shadow-xl border border-stone-200/50 space-y-1 min-w-[180px]">
                 <div className="flex items-center gap-2 mb-1">
                   <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />

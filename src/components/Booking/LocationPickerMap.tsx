@@ -1,8 +1,16 @@
-/// <reference types="@types/google.maps" />
 import React, { useState, useEffect, useCallback } from 'react';
-import { MapPin, Navigation, RefreshCw, ExternalLink, AlertCircle, Map as MapIcon } from 'lucide-react';
-import { Map, AdvancedMarker, Pin, useMap, useApiLoadingStatus, APILoadingStatus } from '@vis.gl/react-google-maps';
-import { AddressPicker } from '../Maps/AddressPicker';
+import { MapPin, Navigation, RefreshCw, ExternalLink, Map as MapIcon } from 'lucide-react';
+import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
+import L from 'leaflet';
+import { AddressPicker, PlaceResult } from '../Maps/AddressPicker';
+
+// Fix Leaflet icon issue
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+});
 
 interface LocationPickerMapProps {
   initialAddress: string;
@@ -48,16 +56,25 @@ const getKecamatanCoords = (kec: string) => {
   return match ? KECAMATAN_COORDS[match] : MEDAN_BASE;
 };
 
+// Haversine formula
+const calculateHaversine = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+  const R = 6371; // km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+};
+
 const MapController = ({ position, zoom }: { position: { lat: number; lng: number }; zoom?: number }) => {
   const map = useMap();
-  
   useEffect(() => {
-    if (map && position) {
-      map.panTo(position);
-      if (zoom) map.setZoom(zoom);
+    if (position) {
+      map.setView([position.lat, position.lng], zoom || map.getZoom());
     }
   }, [map, position, zoom]);
-
   return null;
 };
 
@@ -79,54 +96,29 @@ export const LocationPickerMap: React.FC<LocationPickerMapProps> = ({
 
   const calculateDistance = useCallback((coords: { lat: number; lng: number }) => {
     if (!coords || isNaN(coords.lat) || isNaN(coords.lng)) return 2.5;
-    if (!window.google || !window.google.maps || !google.maps.geometry) {
-      // Haversine formula fallback
-      const R = 6371; // Earth's radius in km
-      const dLat = ((coords.lat - activeBase.lat) * Math.PI) / 180;
-      const dLng = ((coords.lng - activeBase.lng) * Math.PI) / 180;
-      const a =
-        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-        Math.cos((activeBase.lat * Math.PI) / 180) *
-          Math.cos((coords.lat * Math.PI) / 180) *
-          Math.sin(dLng / 2) *
-          Math.sin(dLng / 2);
-      const safeA = Math.min(1, Math.max(0, a));
-      const c = 2 * Math.atan2(Math.sqrt(safeA), Math.sqrt(1 - safeA));
-      const d = R * c;
-      const result = Math.max(1, Math.round(d * 10) / 10);
-      return isNaN(result) ? 2.5 : result;
-    }
-    
-    const base = new google.maps.LatLng(activeBase.lat, activeBase.lng);
-    const target = new google.maps.LatLng(coords.lat, coords.lng);
-    
-    const distanceInMeters = google.maps.geometry.spherical.computeDistanceBetween(
-      base,
-      target
-    );
-    
-    const distKm = Math.max(1, Math.round((distanceInMeters / 1000) * 10) / 10);
-    return isNaN(distKm) ? 2.5 : distKm;
+    const dist = calculateHaversine(activeBase.lat, activeBase.lng, coords.lat, coords.lng);
+    const result = Math.max(1, Math.round(dist * 10) / 10);
+    return isNaN(result) ? 2.5 : result;
   }, [activeBase]);
 
-  const handlePlaceSelect = async (place: google.maps.places.Place) => {
+  const handlePlaceSelect = async (place: PlaceResult) => {
     if (!place.location) return;
 
     const coords = {
-      lat: place.location.lat(),
-      lng: place.location.lng()
+      lat: place.location.lat,
+      lng: place.location.lng
     };
 
     const dist = calculateDistance(coords);
     
     setSelectedCoords(coords);
-    setSelectedAddress(place.formattedAddress || place.displayName || '');
+    setSelectedAddress(place.formattedAddress || '');
     setDistanceKm(dist);
     setKecamatan('Medan'); 
     setMapZoom(16);
 
     onLocationSelect(
-      place.formattedAddress || place.displayName || '',
+      place.formattedAddress || '',
       'Medan',
       dist,
       coords
@@ -134,18 +126,32 @@ export const LocationPickerMap: React.FC<LocationPickerMapProps> = ({
   };
 
   const handleGetCurrentLocation = () => {
-    if (!navigator.geolocation) return;
+    if (!navigator.geolocation) {
+      alert('Browser Anda tidak mendukung fitur GPS.');
+      return;
+    }
 
     setIsLocating(true);
     navigator.geolocation.getCurrentPosition(
-      (position) => {
+      async (position) => {
         const coords = {
           lat: position.coords.latitude,
           lng: position.coords.longitude
         };
 
         const dist = calculateDistance(coords);
-        const addr = `Lokasi GPS Terdeteksi (${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)})`;
+        let addr = `Lokasi GPS Terdeteksi (${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)})`;
+
+        try {
+          // Reverse Geocoding via Nominatim OpenStreetMap
+          const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${coords.lat}&lon=${coords.lng}`);
+          const data = await response.json();
+          if (data && data.display_name) {
+            addr = data.display_name;
+          }
+        } catch (error) {
+          console.error('Reverse geocoding error:', error);
+        }
 
         setSelectedCoords(coords);
         setSelectedAddress(addr);
@@ -155,8 +161,12 @@ export const LocationPickerMap: React.FC<LocationPickerMapProps> = ({
 
         onLocationSelect(addr, 'Medan', dist, coords);
       },
-      () => setIsLocating(false),
-      { enableHighAccuracy: true }
+      (error) => {
+        console.error('Error GPS:', error);
+        setIsLocating(false);
+        alert('Gagal mendapatkan lokasi. Pastikan GPS aktif dan Anda telah memberikan izin lokasi pada browser.');
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
   };
 
@@ -168,10 +178,6 @@ export const LocationPickerMap: React.FC<LocationPickerMapProps> = ({
     }
   }, [activeBase, selectedCoords, calculateDistance, distanceKm, selectedAddress, kecamatan, onLocationSelect]);
 
-  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
-  const apiStatus = useApiLoadingStatus();
-  const isFailed = !apiKey || apiKey.trim() === '' || apiStatus === APILoadingStatus.FAILED || apiStatus === APILoadingStatus.AUTH_FAILURE;
-
   return (
     <div className="space-y-4 bg-stone-50 p-4 rounded-[2rem] border border-stone-200">
       <div className="flex items-center justify-between">
@@ -181,127 +187,60 @@ export const LocationPickerMap: React.FC<LocationPickerMapProps> = ({
           </div>
           <div>
             <h4 className="text-xs font-bold text-stone-900 uppercase tracking-wider">
-              {isFailed ? 'Input Alamat Manual (Mode Peta Aman)' : 'Pin-Point Lokasi Presisi'}
+              Pin-Point Lokasi Presisi
             </h4>
             <p className="text-[11px] text-stone-500">
-              {isFailed ? 'Isi detail alamat & kecamatan Anda di bawah' : 'Cari alamat atau gunakan GPS untuk akurasi penjemputan'}
+              Cari alamat atau gunakan GPS untuk akurasi penjemputan
             </p>
           </div>
         </div>
 
-        {!isFailed && (
-          <button
-            type="button"
-            onClick={handleGetCurrentLocation}
-            disabled={isLocating}
-            className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
-          >
-            {isLocating ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Navigation className="w-3.5 h-3.5" />}
-            <span>{isLocating ? 'Mencari...' : 'GPS Saya'}</span>
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={handleGetCurrentLocation}
+          disabled={isLocating}
+          className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm cursor-pointer z-10"
+        >
+          {isLocating ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Navigation className="w-3.5 h-3.5" />}
+          <span>{isLocating ? 'Mencari...' : 'GPS Saya'}</span>
+        </button>
       </div>
 
-      {isFailed ? (
-        <div className="space-y-3">
-          <div className="p-3 bg-amber-50 text-amber-900 rounded-2xl text-[11px] font-medium border border-amber-200/60 flex items-start gap-2">
-            <AlertCircle className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
-            <div>
-              <strong>Mode Peta Aman Aktif:</strong> Peta interaktif dinonaktifkan karena konfigurasi kunci API Google Cloud belum lengkap. Jangan khawatir, Anda tetap bisa memasukkan koordinat & alamat secara manual di bawah dengan lancar!
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold text-stone-500 uppercase tracking-wider">Kecamatan Domisili</label>
-              <select
-                value={kecamatan}
-                onChange={(e) => {
-                  const selectedKec = e.target.value;
-                  setKecamatan(selectedKec);
-                  const coords = getKecamatanCoords(selectedKec);
-                  setSelectedCoords(coords);
-                  const dist = calculateDistance(coords);
-                  setDistanceKm(dist);
-                  onLocationSelect(selectedAddress, selectedKec, dist, coords);
-                }}
-                className="w-full px-3 py-2.5 bg-white border border-stone-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 transition-all shadow-sm"
-              >
-                {Object.keys(KECAMATAN_COORDS).map((kec) => (
-                  <option key={kec} value={kec}>{kec}</option>
-                ))}
-              </select>
-            </div>
+      <AddressPicker onPlaceSelect={handlePlaceSelect} />
 
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold text-stone-500 uppercase tracking-wider">Alamat Lengkap Rumah</label>
-              <input
-                type="text"
-                placeholder="Tuliskan nama jalan, no. rumah, RT/RW..."
-                value={selectedAddress}
-                onChange={(e) => {
-                  const addr = e.target.value;
-                  setSelectedAddress(addr);
-                  onLocationSelect(addr, kecamatan, distanceKm, selectedCoords);
-                }}
-                className="w-full px-3 py-2.5 bg-white border border-stone-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 transition-all shadow-sm"
-              />
-            </div>
-          </div>
-        </div>
-      ) : (
-        <AddressPicker onPlaceSelect={handlePlaceSelect} />
-      )}
-
-      <div className="relative w-full h-56 rounded-2xl overflow-hidden border border-stone-200 shadow-inner">
-        {isFailed ? (
-          <div className="w-full h-full bg-stone-100 flex flex-col items-center justify-center p-6 text-center space-y-3">
-            <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center shadow-sm">
-              <MapIcon className="w-6 h-6 animate-pulse animate-duration-1000" />
-            </div>
-            <div>
-              <div className="text-xs font-bold text-stone-900">Alamat Anda Tersimpan Sukses!</div>
-              <div className="text-[10px] text-stone-500 max-w-xs mt-1">
-                Kecamatan <strong>{kecamatan}</strong> berada dalam jangkauan home service Mimah Spa.
-              </div>
-            </div>
-          </div>
-        ) : (
-          <Map
-            defaultCenter={MEDAN_BASE}
-            defaultZoom={13}
-            gestureHandling="greedy"
-            disableDefaultUI={true}
-            mapId={import.meta.env.VITE_GOOGLE_MAPS_MAP_ID || 'DEMO_MAP_ID'}
-            internalUsageAttributionIds={['gmp_mcp_codeassist_v1_aistudio']}
-          >
-            <MapController position={selectedCoords} zoom={mapZoom} />
-            <AdvancedMarker position={selectedCoords}>
-              <Pin background={'#059669'} borderColor={'#047857'} glyphColor={'#ffffff'} />
-            </AdvancedMarker>
-          </Map>
-        )}
+      <div className="relative w-full h-56 rounded-2xl overflow-hidden border border-stone-200 shadow-inner z-0">
+        <MapContainer 
+          center={[MEDAN_BASE.lat, MEDAN_BASE.lng]} 
+          zoom={13} 
+          style={{ height: '100%', width: '100%' }}
+          zoomControl={false}
+        >
+          <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
+          <MapController position={selectedCoords} zoom={mapZoom} />
+          <Marker position={[selectedCoords.lat, selectedCoords.lng]} />
+        </MapContainer>
 
         {/* Floating Overlays */}
-        <div className="absolute top-3 left-3 right-3 flex items-center justify-between pointer-events-none">
+        <div className="absolute top-3 left-3 right-3 flex items-center justify-between pointer-events-none z-[1000]">
           <span className="px-3 py-1.5 bg-white/90 backdrop-blur-md rounded-xl text-[10px] font-bold text-stone-800 border border-stone-200 shadow-sm flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
             Pos {therapistName ? `${therapistName} (${originKecamatan})` : 'Mimah HQ'}
           </span>
           
-          {!isFailed && (
-            <a
-              href={`https://www.google.com/maps/search/?api=1&query=${selectedCoords.lat},${selectedCoords.lng}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-3 py-1.5 bg-stone-900 text-white rounded-xl text-[10px] font-bold flex items-center gap-1.5 hover:bg-black transition-all shadow-lg pointer-events-auto cursor-pointer"
-            >
-              Google Maps <ExternalLink className="w-3 h-3" />
-            </a>
-          )}
+          <a
+            href={`https://www.google.com/maps/search/?api=1&query=${selectedCoords.lat},${selectedCoords.lng}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-3 py-1.5 bg-stone-900 text-white rounded-xl text-[10px] font-bold flex items-center gap-1.5 hover:bg-black transition-all shadow-lg pointer-events-auto cursor-pointer"
+          >
+            Google Maps <ExternalLink className="w-3 h-3" />
+          </a>
         </div>
 
-        <div className="absolute bottom-3 left-3 right-3 z-10 bg-white/95 backdrop-blur-md p-3 rounded-xl border border-stone-100 shadow-lg flex items-center justify-between">
+        <div className="absolute bottom-3 left-3 right-3 z-[1000] bg-white/95 backdrop-blur-md p-3 rounded-xl border border-stone-100 shadow-lg flex items-center justify-between">
           <div className="flex-1 min-w-0 pr-4">
             <div className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">Alamat Terpilih</div>
             <div className="text-[11px] font-bold text-stone-900 truncate">{selectedAddress || 'Belum diisi'}</div>
