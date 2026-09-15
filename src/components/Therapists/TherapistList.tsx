@@ -12,10 +12,12 @@ import {
   Sparkles,
   Phone,
   CheckCircle,
-  Briefcase
+  Briefcase,
+  UserPlus
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { Therapist, TherapistGenderPreference } from '../../types';
+import { TherapistRegistrationModal } from './TherapistRegistrationModal';
 
 export const TherapistList: React.FC = () => {
   const { 
@@ -28,6 +30,7 @@ export const TherapistList: React.FC = () => {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [specialtyFilter, setSpecialtyFilter] = useState<string>('all');
+  const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
 
   // Filter therapists
   const filteredTherapists = therapists.filter(t => {
@@ -48,23 +51,33 @@ export const TherapistList: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="bg-white rounded-2xl border border-stone-200 p-6 shadow-xs">
-        <div className="max-w-3xl">
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 text-xs font-semibold mb-2 border border-emerald-200">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-            <span>100% Terapis Terverifikasi & Tersertifikasi Resmi</span>
+      {/* Header & Registration CTA Banner */}
+      <div className="bg-white rounded-2xl border border-stone-200 p-6 shadow-xs space-y-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="max-w-2xl">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 text-xs font-semibold mb-2 border border-emerald-200">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+              <span>100% Terapis Terverifikasi & Tersertifikasi Resmi</span>
+            </div>
+            <h2 className="text-2xl font-bold text-stone-900 font-serif-display">
+              Direktori Mitra Terapis Profesional
+            </h2>
+            <p className="text-xs sm:text-sm text-stone-500 mt-1">
+              Seluruh mitra terapis kami telah melewati uji kompetensi BNSP/Kemenkes, pemeriksaan latar belakang (SKCK), serta protokol higienitas koper peralatan steril.
+            </p>
           </div>
-          <h2 className="text-2xl font-bold text-stone-900 font-serif-display">
-            Direktori Mitra Terapis Profesional
-          </h2>
-          <p className="text-xs sm:text-sm text-stone-500 mt-1">
-            Seluruh mitra terapis kami telah melewati uji kompetensi BNSP/Kemenkes, pemeriksaan latar belakang (SKCK), serta protokol higienitas koper peralatan steril.
-          </p>
+
+          <button
+            onClick={() => setIsRegisterModalOpen(true)}
+            className="px-5 py-3 bg-emerald-800 hover:bg-emerald-900 text-white rounded-2xl text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-md cursor-pointer shrink-0"
+          >
+            <UserPlus className="w-4 h-4 text-emerald-300" />
+            <span>Gabung Jadi Mitra</span>
+          </button>
         </div>
 
         {/* Search & Filters */}
-        <div className="mt-6 grid grid-cols-1 sm:grid-cols-12 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 pt-4 border-t border-stone-100">
           
           {/* Search bar */}
           <div className="sm:col-span-8 relative">
@@ -216,6 +229,12 @@ export const TherapistList: React.FC = () => {
           <p className="text-stone-500 text-sm">Tidak ditemukan terapis dengan filter pencarian tersebut.</p>
         </div>
       )}
+
+      {/* Partner Registration Modal */}
+      <TherapistRegistrationModal
+        isOpen={isRegisterModalOpen}
+        onClose={() => setIsRegisterModalOpen(false)}
+      />
     </div>
   );
 };

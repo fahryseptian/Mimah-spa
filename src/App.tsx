@@ -237,31 +237,33 @@ VITE_SUPABASE_ANON_KEY=Masukkan_Anon_Key_Supabase_Anda`}
             {(currentTab === 'katalog' || currentTab === 'services') && (
               <div className="space-y-16">
                 {/* Hero Banner */}
-                <div className="relative overflow-hidden rounded-[2.5rem] bg-white text-stone-900 p-8 sm:p-12 border border-stone-100 shadow-premium">
+                <div className="relative overflow-hidden rounded-[2.5rem] bg-white text-stone-900 p-8 sm:p-14 border border-stone-100 shadow-premium">
                   {/* Background decorative accents */}
-                  <div className="absolute top-0 right-0 -mt-24 -mr-24 w-[30rem] h-[30rem] bg-emerald-50 rounded-full blur-[100px] pointer-events-none opacity-60" />
+                  <div className="absolute top-0 right-0 -mt-24 -mr-24 w-[32rem] h-[32rem] bg-emerald-50 rounded-full blur-[100px] pointer-events-none opacity-70" />
+                  <div className="absolute bottom-0 left-1/3 -mb-20 w-80 h-80 bg-amber-50 rounded-full blur-[90px] pointer-events-none opacity-40" />
                   
                   <div className="relative z-10 max-w-3xl space-y-8">
-                    <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-100/50 shadow-sm backdrop-blur-sm">
-                      <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
-                      <span className="text-[10px] font-bold tracking-widest uppercase">Mimah Spa Indonesia</span>
+                    <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-100/80 shadow-xs backdrop-blur-sm">
+                      <Sparkles className="w-3.5 h-3.5 text-emerald-600 animate-pulse" />
+                      <span className="text-[10px] font-black tracking-widest uppercase">Layanan Wellness & Spa Home Service No. 1 di Medan</span>
                     </div>
 
-                    <h1 className="text-4xl sm:text-6xl font-bold font-serif-display leading-[1.1] tracking-tight">
-                      Spa Bintang Lima, <br />
-                      <span className="text-emerald-700">Di Rumah Anda.</span>
+                    <h1 className="text-4xl sm:text-6xl font-bold font-serif-display leading-[1.12] tracking-tight text-stone-900">
+                      Pengalaman Spa Bintang Lima,<br />
+                      <span className="text-emerald-700">Langsung di Rumah Anda.</span>
                     </h1>
 
-                    <p className="text-lg text-stone-600 leading-relaxed max-w-xl font-medium">
-                      Layanan spa profesional khusus wanita di Medan. Nikmati ketenangan maksimal bersama terapis bersertifikat BNSP.
+                    <p className="text-base sm:text-lg text-stone-600 leading-relaxed max-w-2xl font-medium">
+                      Kembalikan kesegaran tubuh dan pikiran tanpa perlu menembus kemacetan. Terapis bersertifikat BNSP kami hadir membawa koper perlengkapan steril, sprei disposable, serta minyak aromaterapi murni langsung ke lokasi Anda.
                     </p>
 
-                    <div className="flex items-center gap-4 pt-2">
+                    <div className="flex flex-wrap items-center gap-4 pt-1">
                       <button 
                         onClick={() => setIsBookingModalOpen(true)}
-                        className="px-6 py-3.5 rounded-2xl bg-emerald-700 text-white font-bold shadow-lg shadow-emerald-700/20 hover:bg-emerald-800 transition-all cursor-pointer active:scale-95"
+                        className="px-8 py-4 rounded-2xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-sm shadow-xl shadow-emerald-700/20 transition-all cursor-pointer active:scale-95 flex items-center gap-2.5"
                       >
-                        Pesan Sekarang
+                        <span>Pesan Layanan Sekarang</span>
+                        <ArrowRight className="w-4 h-4" />
                       </button>
                       <button 
                         onClick={() => {
@@ -272,31 +274,32 @@ VITE_SUPABASE_ANON_KEY=Masukkan_Anon_Key_Supabase_Anda`}
                             setActiveCustomerTab('katalog');
                           }
                         }}
-                        className="px-6 py-3.5 rounded-2xl bg-white text-stone-700 font-bold border border-stone-200 hover:bg-stone-50 hover:border-emerald-300 transition-all cursor-pointer shadow-sm active:scale-95"
+                        className="px-7 py-4 rounded-2xl bg-white text-stone-700 font-bold text-sm border border-stone-200 hover:bg-stone-50 hover:border-emerald-300 transition-all cursor-pointer shadow-xs active:scale-95"
                       >
-                        Lihat Layanan
+                        Eksplor Layanan
                       </button>
                     </div>
 
-                    {/* Trust Proof Badges */}
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-6">
+                    {/* Trust Proof Badges Grid */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-6 border-t border-stone-100">
                       {[
-                        { icon: ShieldCheck, label: 'Sertifikat BNSP', sub: 'Terpercaya' },
-                        { icon: Clock, label: 'Cepat', sub: 'Estimasi 30m' },
-                        { icon: Award, label: '4.9/5', sub: '3.800+ Review' },
+                        { icon: ShieldCheck, label: 'Kualifikasi BNSP', sub: '100% Terapis Resmi' },
+                        { icon: Clock, label: 'Tiba Tepat Waktu', sub: 'Estimasi 30-45 Menit' },
+                        { icon: Award, label: 'Rating 4.9 / 5.0', sub: '3.800+ Ulasan Puas' },
+                        { icon: Heart, label: 'Higienis Medis', sub: 'Kit Steril & Disposable' },
                       ].map((item, i) => (
-                        <div key={i} className="flex items-center gap-3">
+                        <div key={i} className="flex items-center gap-3 p-2.5 rounded-2xl bg-stone-50/60 border border-stone-100">
                           <item.icon className="w-5 h-5 text-emerald-600 shrink-0" />
                           <div>
-                            <div className="font-bold text-[11px] text-stone-900">{item.label}</div>
-                            <div className="text-[9px] text-stone-500">{item.sub}</div>
+                            <div className="font-bold text-[11px] text-stone-900 leading-tight">{item.label}</div>
+                            <div className="text-[9px] text-stone-500 font-medium leading-tight mt-0.5">{item.sub}</div>
                           </div>
                         </div>
                       ))}
                     </div>
 
                     {/* Integrated Quick Booking Bar */}
-                    <div className="pt-6">
+                    <div className="pt-4">
                       <QuickBookingBar />
                     </div>
                   </div>
@@ -339,7 +342,7 @@ VITE_SUPABASE_ANON_KEY=Masukkan_Anon_Key_Supabase_Anda`}
                     Kalkulator & Simulasi Ongkos Transportasi Terapis
                   </h2>
                   <p className="text-xs text-stone-500 mt-1">
-                    Hitung estimasi transparan ongkos bensin motor terapis menuju alamat rumah, kos, hotel, atau apartemen Anda di {selectedCity}.
+                    Hitung estimasi transparan ongkos bensin motor terapis menuju alamat rumah, kos, hotel, atau apartemen Anda di Medan berdasarkan radius jarak lokasi Anda.
                   </p>
                 </div>
 
@@ -383,44 +386,6 @@ VITE_SUPABASE_ANON_KEY=Masukkan_Anon_Key_Supabase_Anda`}
       {isBookingModalOpen && <BookingWizard />}
       <LoyaltyRewardsModal />
       <TherapistDetailModal />
-
-      {/* Operator Quick Switcher Floating Bar (Instant Production Login Alternative) */}
-      <div className="fixed bottom-6 left-6 z-50 bg-stone-900/95 backdrop-blur-md text-white px-4 py-2.5 rounded-2xl shadow-2xl border border-stone-800 flex items-center gap-3 text-xs">
-        <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400 hidden sm:inline">Quick Operator:</span>
-        <div className="flex items-center gap-1">
-          <button
-            onClick={() => setUserRole('customer')}
-            className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${
-              userRole === 'customer' ? 'bg-emerald-600 text-white' : 'bg-stone-800 text-stone-300 hover:bg-stone-700'
-            }`}
-          >
-            Pelanggan
-          </button>
-          <button
-            onClick={() => {
-              setUserRole('therapist');
-              toast.success('Beralih ke Portal Mitra Terapis');
-            }}
-            className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${
-              userRole === 'therapist' ? 'bg-emerald-600 text-white' : 'bg-stone-800 text-stone-300 hover:bg-stone-700'
-            }`}
-          >
-            Terapis
-          </button>
-          <button
-            onClick={() => {
-              localStorage.setItem('mimah_admin_email', 'fahryseptian35@gmail.com');
-              setUserRole('admin');
-              toast.success('Beralih ke Dashboard Superadmin');
-            }}
-            className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${
-              userRole === 'admin' ? 'bg-emerald-600 text-white' : 'bg-stone-800 text-stone-300 hover:bg-stone-700'
-            }`}
-          >
-            Admin
-          </button>
-        </div>
-      </div>
 
       {/* WhatsApp Floating Widget - Only for Customer */}
       {userRole === 'customer' && <WhatsAppFloatingButton />}

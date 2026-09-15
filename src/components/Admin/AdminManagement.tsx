@@ -37,7 +37,8 @@ import {
   Database,
   Image as ImageIcon,
   Upload,
-  Loader2
+  Loader2,
+  Phone
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { Therapist, TransportTariffConfig, Voucher } from '../../types';
@@ -56,7 +57,6 @@ import { VoucherManagement } from './VoucherManagement';
 import { ServiceManagement } from './ServiceManagement';
 import { InventoryManagement } from './InventoryManagement';
 import { TherapistRecommendation } from './TherapistRecommendation';
-import { SupabaseSchemaCenter } from './SupabaseSchemaCenter';
 import { AdminProfile } from './AdminProfile';
 import { BookingItem } from '../../types';
 
@@ -89,6 +89,8 @@ export const AdminManagement: React.FC = () => {
     whatsappLogs,
     clearWhatsappLogs,
     refundDisputes,
+    therapistApplications = [],
+    updateTherapistApplicationStatus,
     logout
   } = useApp();
 
@@ -424,41 +426,43 @@ export const AdminManagement: React.FC = () => {
       {/* Tab Navigation */}
       <div className="bg-white border-y border-stone-200/50 py-3 -mx-5 px-5">
         <div className="flex items-center gap-1.5 overflow-x-auto max-w-full pb-2">
+        {/* Admin Navigation Tabs Category Bar */}
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-2 px-1 border-b border-stone-200/80 scroll-smooth">
           {[
             { id: 'analytics', label: 'Dashboard Utama', icon: TrendingUp },
-            { id: 'crm', label: 'Data Pelanggan', icon: Users },
-            { id: 'broadcast', label: 'Broadcast', icon: Send },
-            { id: 'monitoring', label: 'Monitoring', icon: Navigation },
-            { id: 'disputes', label: 'Pengaduan', icon: AlertCircle, badge: refundDisputes.filter(d => d.status === 'pending').length },
-            { id: 'therapists', label: 'Mitra Terapis', icon: Briefcase },
+            { id: 'monitoring', label: 'Monitoring Peta GPS', icon: Navigation },
+            { id: 'therapists', label: 'Mitra Terapis', icon: Briefcase, badge: therapistApplications.filter(a => a.status === 'pending').length },
             { id: 'transactions', label: 'Log Transaksi', icon: FileText, badge: bookings.filter(b => b.status !== 'completed' && b.status !== 'cancelled').length },
+            { id: 'disputes', label: 'Pengaduan & Refund', icon: AlertCircle, badge: refundDisputes.filter(d => d.status === 'pending').length },
+            { id: 'crm', label: 'Data Pelanggan', icon: Users },
+            { id: 'broadcast', label: 'Broadcast WA', icon: Send },
             { id: 'inventory', label: 'Manajemen Stok', icon: Package },
             { id: 'services', label: 'Layanan', icon: Sliders },
-            { id: 'vouchers', label: 'Voucher', icon: Tag },
-            { id: 'finance', label: 'Keuangan', icon: Coins },
-            { id: 'settings', label: 'Pengaturan', icon: Settings },
-            { id: 'database', label: 'Skema Supabase', icon: Database },
+            { id: 'vouchers', label: 'Voucher Promo', icon: Tag },
+            { id: 'finance', label: 'Laporan Keuangan', icon: Coins },
+            { id: 'settings', label: 'Pengaturan Global', icon: Settings },
             { id: 'health', label: 'Kesehatan Sistem', icon: Activity },
             { id: 'uat', label: 'Simulator UAT', icon: Zap },
           ].map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveAdminTab(tab.id as any)}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all whitespace-nowrap shrink-0 relative ${
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-[11px] font-black uppercase tracking-wider transition-all whitespace-nowrap shrink-0 relative cursor-pointer ${
                 activeAdminTab === tab.id
-                  ? 'bg-stone-900 text-white shadow-xl shadow-stone-900/20'
-                  : 'text-stone-500 hover:bg-stone-100 hover:text-stone-900'
+                  ? 'bg-stone-900 text-white shadow-lg shadow-stone-900/20'
+                  : 'bg-white border border-stone-100 text-stone-500 hover:bg-stone-100 hover:text-stone-900'
               }`}
             >
-              <tab.icon className={`w-3.5 h-3.5 ${activeAdminTab === tab.id ? 'text-emerald-400' : 'opacity-50'}`} />
+              <tab.icon className={`w-3.5 h-3.5 ${activeAdminTab === tab.id ? 'text-emerald-400' : 'text-stone-400'}`} />
               <span>{tab.label}</span>
               {tab.badge && tab.badge > 0 ? (
-                <span className="px-2 py-0.5 rounded-full bg-amber-400 text-stone-900 text-[9px] font-black shadow-sm">
+                <span className="px-2 py-0.5 rounded-full bg-amber-400 text-stone-900 text-[9px] font-black shadow-xs animate-pulse">
                   {tab.badge}
                 </span>
               ) : null}
             </button>
           ))}
+        </div>
         </div>
       </div>
 
@@ -499,10 +503,6 @@ export const AdminManagement: React.FC = () => {
         {activeAdminTab === 'settings' && (
           <GlobalSettings />
         )}
-
-        {activeAdminTab === 'database' && (
-          <SupabaseSchemaCenter />
-        )}
         
         {activeAdminTab === 'profile' && (
           <AdminProfile />
@@ -537,20 +537,121 @@ export const AdminManagement: React.FC = () => {
                 <div className="text-[10px] text-emerald-600/80 font-bold">Siap Menerima Sesi</div>
               </div>
               <div className="bg-white p-5 rounded-3xl border border-stone-100 shadow-sm space-y-2">
+                <div className="text-[9px] font-black uppercase tracking-wider text-stone-400">Pelamar Baru (Pending)</div>
+                <div className="text-2xl font-black text-amber-600">
+                  {therapistApplications.filter(a => a.status === 'pending').length} Pelamar
+                </div>
+                <div className="text-[10px] text-amber-700/80 font-bold">Perlu Review Admin</div>
+              </div>
+              <div className="bg-white p-5 rounded-3xl border border-stone-100 shadow-sm space-y-2">
                 <div className="text-[9px] font-black uppercase tracking-wider text-stone-400">Terapis Wanita</div>
                 <div className="text-2xl font-black text-pink-600">
                   {therapists.filter(t => t.gender === 'female').length} Terapis
                 </div>
                 <div className="text-[10px] text-stone-500 font-medium">Spesialisasi Ibu & Anak</div>
               </div>
-              <div className="bg-white p-5 rounded-3xl border border-stone-100 shadow-sm space-y-2">
-                <div className="text-[9px] font-black uppercase tracking-wider text-stone-400">Terapis Pria</div>
-                <div className="text-2xl font-black text-blue-600">
-                  {therapists.filter(t => t.gender === 'male').length} Terapis
-                </div>
-                <div className="text-[10px] text-stone-500 font-medium">Spesialisasi Cedera & Refleksi</div>
-              </div>
             </div>
+
+            {/* Pendaftaran Mitra Terapis Baru Section */}
+            {therapistApplications.length > 0 && (
+              <div className="bg-white p-6 rounded-3xl border border-amber-200/80 shadow-sm space-y-4">
+                <div className="flex items-center justify-between border-b border-stone-100 pb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                    <h3 className="text-sm font-black uppercase tracking-wider text-stone-900">
+                      Pengajuan Pendaftaran Mitra Terapis Baru ({therapistApplications.filter(a => a.status === 'pending').length} Menunggu)
+                    </h3>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {therapistApplications.map((app) => (
+                    <div key={app.id} className="p-4 bg-stone-50 rounded-2xl border border-stone-200 space-y-3">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h4 className="font-extrabold text-stone-900 text-sm">{app.fullName}</h4>
+                          <div className="text-[11px] text-stone-500 font-medium">
+                            {app.age} Thn • {app.kecamatan}, {app.city} • Pengalaman {app.experienceYears} Thn
+                          </div>
+                        </div>
+                        <span className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider ${
+                          app.status === 'pending' ? 'bg-amber-100 text-amber-800' :
+                          app.status === 'accepted' ? 'bg-emerald-100 text-emerald-800' :
+                          'bg-stone-200 text-stone-600'
+                        }`}>
+                          {app.status}
+                        </span>
+                      </div>
+
+                      <div className="text-xs text-stone-700 space-y-1 bg-white p-3 rounded-xl border border-stone-100">
+                        <div><strong>Sertifikat:</strong> {app.certifications || 'Belum diisi'}</div>
+                        <div><strong>Spesialisasi:</strong> {(app.specialties || []).join(', ')}</div>
+                        <div className="text-[11px] text-stone-500 italic mt-1">"{app.motivation}"</div>
+                      </div>
+
+                      <div className="flex items-center justify-between pt-1">
+                        <a
+                          href={`https://wa.me/62${app.phone.replace(/\D/g, '').replace(/^0/, '').replace(/^62/, '')}?text=Halo%20${encodeURIComponent(app.fullName)},%20kami%20dari%20Tim%20HR%20Mimah%20Spa%20Medan%20mengenai%20pendaftaran%20mitra%20terapis%20Anda.`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[11px] font-bold text-emerald-700 hover:underline flex items-center gap-1"
+                        >
+                          <Phone className="w-3 h-3" />
+                          <span>Hubungi {app.phone}</span>
+                        </a>
+
+                        {app.status === 'pending' && (
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => {
+                                updateTherapistApplicationStatus(app.id, 'rejected');
+                                showToast('Aplikasi mitra ditolak', 'info');
+                              }}
+                              className="px-3 py-1.5 bg-stone-200 hover:bg-stone-300 text-stone-700 rounded-xl text-[10px] font-bold transition-all"
+                            >
+                              Tolak
+                            </button>
+                            <button
+                              onClick={() => {
+                                updateTherapistApplicationStatus(app.id, 'accepted');
+                                // Auto create therapist account
+                                addTherapist({
+                                  name: app.fullName,
+                                  gender: app.gender,
+                                  age: app.age,
+                                  phone: app.phone,
+                                  email: app.email,
+                                  password: 'therapistpass',
+                                  photoUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&auto=format&fit=crop&q=80',
+                                  status: 'offline',
+                                  rating: 5.0,
+                                  reviewCount: 0,
+                                  completedOrders: 0,
+                                  experienceYears: app.experienceYears,
+                                  specialties: app.specialties,
+                                  certifications: [app.certifications || 'Sertifikat Terapis BNSP'],
+                                  totalHours: 0,
+                                  baseCity: app.city,
+                                  baseKecamatan: app.kecamatan,
+                                  currentEarnings: 0,
+                                  bio: app.motivation || 'Terapis profesional bersertifikat resmi.',
+                                  equipmentProvided: ['Koper Matras Lipat', 'Minyak Aromaterapi Steril'],
+                                  operationalCities: [app.city]
+                                });
+                                showToast(`Aplikasi ${app.fullName} Diterima & Akun Mitra Berhasil Dibuat!`, 'success');
+                              }}
+                              className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-[10px] font-bold transition-all shadow-sm"
+                            >
+                              Setujui & Buat Akun
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-3xl border border-stone-100 shadow-sm">
               <div className="relative flex-1 max-w-lg">

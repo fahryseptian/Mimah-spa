@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useApp } from '../context/AppContext';
-import { Lock, Mail, Key, CheckCircle2, ShieldAlert } from 'lucide-react';
+import { Lock, Mail, Key, CheckCircle2, ShieldAlert, Eye, EyeOff } from 'lucide-react';
 
 export const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { showToast, setUserRole } = useApp();
@@ -134,7 +135,8 @@ export const LoginPage: React.FC = () => {
                   <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
                   <input
                     type="email"
-                    placeholder="fahryseptian35@gmail.com"
+                    autoComplete="email"
+                    placeholder="nama@email.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="w-full bg-stone-50 border-none rounded-2xl pl-11 pr-4 py-3.5 text-sm text-stone-900 placeholder:text-stone-300 focus:ring-2 focus:ring-emerald-500/20 transition-all outline-none"
@@ -150,13 +152,22 @@ export const LoginPage: React.FC = () => {
                 <div className="relative">
                   <Key className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
                   <input
-                    type="password"
+                    type={showPassword ? "text" : "password"}
+                    autoComplete="current-password"
                     placeholder="Masukkan sandi atau PIN"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full bg-stone-50 border-none rounded-2xl pl-11 pr-4 py-3.5 text-sm text-stone-900 placeholder:text-stone-300 focus:ring-2 focus:ring-emerald-500/20 transition-all outline-none"
+                    className="w-full bg-stone-50 border-none rounded-2xl pl-11 pr-12 py-3.5 text-sm text-stone-900 placeholder:text-stone-300 focus:ring-2 focus:ring-emerald-500/20 transition-all outline-none"
                     required
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 focus:outline-none"
+                    aria-label={showPassword ? "Sembunyikan Kata Sandi" : "Tampilkan Kata Sandi"}
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
               </div>
             </div>

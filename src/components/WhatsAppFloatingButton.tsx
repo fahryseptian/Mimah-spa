@@ -3,10 +3,10 @@ import { Send, MessageCircle } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 export const WhatsAppFloatingButton: React.FC = () => {
-  const { selectedCity, whatsappNumber } = useApp();
+  const { selectedRadiusKm, whatsappNumber } = useApp();
 
   const waUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
-    `Halo Admin Mimah Spa, saya ingin reservasi/konsultasi layanan terapis panggilan ke rumah di wilayah ${selectedCity}.`
+    `Halo Admin Mimah Spa, saya ingin reservasi/konsultasi layanan terapis panggilan ke rumah (Jarak Radius ~${selectedRadiusKm} KM Medan).`
   )}`;
 
   return (

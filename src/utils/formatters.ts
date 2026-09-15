@@ -42,12 +42,9 @@ export const calculateTransportFare = (
   let distanceFare = 0;
   let freePromoDiscount = 0;
 
-  const freeRadius = tariff?.freeRadiusKm ?? 3;
-  if (safeDistanceKm <= freeRadius) {
-    // Within free radius promo!
-    freePromoDiscount = base;
-  } else {
-    const extraKm = safeDistanceKm - freeRadius;
+  const baseRadius = 3;
+  if (safeDistanceKm > baseRadius) {
+    const extraKm = safeDistanceKm - baseRadius;
     distanceFare = Math.round(extraKm * (tariff?.perKmFare ?? 2500));
   }
 

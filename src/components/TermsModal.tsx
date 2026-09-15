@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, ShieldCheck, Info, Scale, AlertTriangle, CheckCircle2, RefreshCw, Lock, Clock, CreditCard, PhoneCall, Sparkles, UserPlus, Mail } from 'lucide-react';
+import { TherapistRegistrationModal } from './Therapists/TherapistRegistrationModal';
 
 interface TermsModalProps {
   isOpen: boolean;
@@ -9,6 +10,7 @@ interface TermsModalProps {
 
 export const TermsModal: React.FC<TermsModalProps> = ({ isOpen, onClose, defaultTab = 'terms' }) => {
   const [activeTab, setActiveTab] = useState<'terms' | 'refund' | 'privacy' | 'careers'>(defaultTab);
+  const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
 
   if (!isOpen) return null;
 
@@ -323,13 +325,14 @@ export const TermsModal: React.FC<TermsModalProps> = ({ isOpen, onClose, default
               </section>
 
               <div className="pt-2 flex flex-col sm:flex-row gap-3">
-                <a
-                  href="mailto:migtahrtg13@gmail.com"
-                  className="flex-1 py-3 bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold rounded-2xl text-xs uppercase tracking-wider shadow-lg shadow-emerald-900/20 transition-all flex items-center justify-center gap-2"
+                <button
+                  type="button"
+                  onClick={() => setIsRegisterModalOpen(true)}
+                  className="flex-1 py-3 bg-emerald-700 hover:bg-emerald-800 text-white font-extrabold rounded-2xl text-xs uppercase tracking-wider shadow-lg shadow-emerald-900/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  <Mail className="w-4 h-4" />
-                  <span>Kirim Lamaran ke Email</span>
-                </a>
+                  <UserPlus className="w-4 h-4 text-emerald-200" />
+                  <span>Isi Form Pendaftaran Mitra</span>
+                </button>
                 <a
                   href="https://wa.me/6285361991731?text=Halo%20Mimah%20Spa,%20saya%20tertarik%20untuk%20bergabung%20sebagai%20Terapis%20/%20Mitra%20Kerjasama."
                   target="_blank"
@@ -359,6 +362,12 @@ export const TermsModal: React.FC<TermsModalProps> = ({ isOpen, onClose, default
         </div>
 
       </div>
+
+      {/* Partner Registration Modal */}
+      <TherapistRegistrationModal
+        isOpen={isRegisterModalOpen}
+        onClose={() => setIsRegisterModalOpen(false)}
+      />
 
     </div>
   );

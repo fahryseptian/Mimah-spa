@@ -117,6 +117,23 @@ export interface LocationZone {
   isActive: boolean;
 }
 
+export interface RadiusOption {
+  km: number;
+  label: string;
+  description: string;
+  badge?: string;
+  estimatedFee: number;
+}
+
+export const MEDAN_RADIUS_OPTIONS: RadiusOption[] = [
+  { km: 3, label: 'Radius < 3 KM', description: 'Area Medan Inti / Pusat (Paling Cepat)', badge: 'Paling Cepat', estimatedFee: 10000 },
+  { km: 5, label: 'Radius 3 - 5 KM', description: 'Medan Baru, Petisah, Polonia, Kota, Maimun', badge: 'Terfavorit', estimatedFee: 15000 },
+  { km: 10, label: 'Radius 5 - 10 KM', description: 'Medan Johor, Sunggal, Helvetia, Amplas, Denai', estimatedFee: 27500 },
+  { km: 15, label: 'Radius 10 - 15 KM', description: 'Medan Tembung, Marelan, Labuhan, Tuntungan', estimatedFee: 40000 },
+  { km: 20, label: 'Radius 15 - 20 KM', description: 'Area Batas Pinggiran Medan & Deli Serdang', estimatedFee: 52500 },
+  { km: 25, label: 'Radius 20 - 25 KM', description: 'Batas Maksimal Jangkauan Terapis Panggilan', badge: 'Limit Max', estimatedFee: 65000 },
+];
+
 export type PlaceType = 'rumah' | 'apartemen' | 'hotel' | 'kos' | 'kantor';
 
 export type BookingStatus = 
@@ -364,11 +381,30 @@ export interface CustomerProfile {
 }
 
 export interface GlobalSettings {
+  // Identitas & Alamat
+  companyName?: string;
+  companyTagline?: string;
+  companyAddress?: string;
+  supportEmail?: string;
+  // Kontak & Darurat
   adminWhatsapp: string;
   sosEmergencyPhone: string;
+  // Operasional & Transport
   operatingHoursStart: string;
   operatingHoursEnd: string;
+  maxServiceRadiusKm?: number;
+  freeTransportBaseKm?: number;
+  nightSurchargeAmount?: number;
+  // Bank & Rekening
+  bankName?: string;
+  bankAccountName?: string;
+  bankAccountNumber?: string;
+  qrisMerchantName?: string;
+  // Komisi & Kebijakan Pembatalan
   defaultCommissionRate: number;
+  freeCancellationWindowMinutes?: number;
+  cancellationFeePercentage?: number;
+  // Loyalitas & Poin
   loyaltyPointsPerReview: number;
   referralRewardPoints: number;
   minPointsToRedeem: number;

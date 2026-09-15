@@ -48,6 +48,8 @@ interface AppContextType {
   setSelectedCity: (city: string) => void;
   selectedKecamatan: string;
   setSelectedKecamatan: (kec: string) => void;
+  selectedRadiusKm: number;
+  setSelectedRadiusKm: (radius: number) => void;
   therapists: Therapist[];
   addOns: ServiceAddOn[];
   cities: LocationZone[];
@@ -171,6 +173,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const [selectedCity, setSelectedCity] = useState<string>('Kota Medan');
   const [selectedKecamatan, setSelectedKecamatan] = useState<string>('Medan Baru');
+  const [selectedRadiusKm, setSelectedRadiusKm] = useState<number>(5);
   const [activeCustomerTab, setActiveCustomerTab] = useState<string>('katalog');
   const [activeAdminTab, setActiveAdminTab] = useState<string>('analytics');
 
@@ -266,17 +269,31 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const [globalSettings, setGlobalSettings] = useState<GlobalSettings>(() => {
     const saved = localStorage.getItem('mimah_global_settings_v1');
-    return saved ? JSON.parse(saved) : {
+    const defaultVal: GlobalSettings = {
+      companyName: 'Mimah Spa Medan',
+      companyTagline: 'Layanan Massage & Wellness Panggilan Medan',
+      companyAddress: 'Jl. Gajah Mada No. 45, Medan Petisah, Kota Medan',
+      supportEmail: 'support@mimahspa.id',
       adminWhatsapp: '6285361991731',
       sosEmergencyPhone: '628123456789',
       operatingHoursStart: '08:00',
       operatingHoursEnd: '22:00',
+      maxServiceRadiusKm: 25,
+      freeTransportBaseKm: 5,
+      nightSurchargeAmount: 25000,
+      bankName: 'Bank BCA (Bank Central Asia)',
+      bankAccountName: 'PT MIMAH SPA MEDAN',
+      bankAccountNumber: '8271092812',
+      qrisMerchantName: 'MIMAH SPA MEDAN OFFICIAL',
       defaultCommissionRate: 0.75,
+      freeCancellationWindowMinutes: 60,
+      cancellationFeePercentage: 20,
       loyaltyPointsPerReview: 1000,
       referralRewardPoints: 5000,
       minPointsToRedeem: 10000,
       pointsToRupiahRate: 1,
     };
+    return saved ? { ...defaultVal, ...JSON.parse(saved) } : defaultVal;
   });
 
   const [customerProfiles, setCustomerProfiles] = useState<CustomerProfile[]>(() => {
@@ -1865,6 +1882,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         setSelectedCity,
         selectedKecamatan,
         setSelectedKecamatan,
+        selectedRadiusKm,
+        setSelectedRadiusKm,
         therapists,
         addOns,
         cities,

@@ -10,7 +10,7 @@ import {
 import { useApp } from '../../context/AppContext';
 
 export const QuickBookingBar: React.FC = () => {
-  const { setIsBookingModalOpen, selectedCity } = useApp();
+  const { setIsBookingModalOpen, selectedRadiusKm } = useApp();
 
   return (
     <div className="relative group max-w-4xl">
@@ -19,14 +19,17 @@ export const QuickBookingBar: React.FC = () => {
       
       <div className="relative bg-white border border-stone-100 p-2 sm:p-3 rounded-[2rem] shadow-premium flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
         
-        {/* Step 1: Location */}
-        <div className="flex-1 flex items-center gap-4 px-6 py-3 rounded-2xl bg-stone-50/50 border border-transparent hover:border-emerald-100 hover:bg-emerald-50/30 transition-all cursor-pointer">
-          <div className="w-10 h-10 rounded-xl bg-white border border-stone-100 flex items-center justify-center shadow-sm">
-            <MapPin className="w-5 h-5 text-emerald-500" />
+        {/* Step 1: Location Radius */}
+        <div 
+          onClick={() => setIsBookingModalOpen(true)}
+          className="flex-1 flex items-center gap-4 px-6 py-3 rounded-2xl bg-stone-50/50 border border-transparent hover:border-emerald-100 hover:bg-emerald-50/30 transition-all cursor-pointer"
+        >
+          <div className="w-10 h-10 rounded-xl bg-white border border-stone-100 flex items-center justify-center shadow-xs">
+            <MapPin className="w-5 h-5 text-emerald-600" />
           </div>
           <div className="flex flex-col text-left">
-            <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest leading-none mb-1.5">Lokasi Anda</p>
-            <p className="text-sm font-bold text-stone-900 leading-none">{selectedCity}, Medan</p>
+            <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest leading-none mb-1.5">Jarak Radius Medan</p>
+            <p className="text-sm font-bold text-stone-900 leading-none">Radius ~ {selectedRadiusKm} KM Medan</p>
           </div>
         </div>
 

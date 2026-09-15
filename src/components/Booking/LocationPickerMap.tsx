@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { MapPin, Navigation, RefreshCw, ExternalLink, Map as MapIcon } from 'lucide-react';
-import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { MapPin, Navigation, RefreshCw, ExternalLink, Touchpad } from 'lucide-react';
+import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import { AddressPicker, PlaceResult } from '../Maps/AddressPicker';
 
@@ -78,6 +78,15 @@ const MapController = ({ position, zoom }: { position: { lat: number; lng: numbe
   return null;
 };
 
+const MapClickHandler = ({ onMapClick }: { onMapClick: (coords: { lat: number; lng: number }) => void }) => {
+  useMapEvents({
+    click(e) {
+      onMapClick({ lat: e.latlng.lat, lng: e.latlng.lng });
+    },
+  });
+  return null;
+};
+
 export const LocationPickerMap: React.FC<LocationPickerMapProps> = ({
   initialAddress,
   initialKecamatan,
@@ -101,6 +110,29 @@ export const LocationPickerMap: React.FC<LocationPickerMapProps> = ({
     return isNaN(result) ? 2.5 : result;
   }, [activeBase]);
 
+  const updateLocationState = useCallback((coords: { lat: number; lng: number }, addr: string, kec: string = 'Medan') => {
+    const dist = calculateDistance(coords);
+    setSelectedCoords(coords);
+    setSelectedAddress(addr);
+    setDistanceKm(dist);
+    setKecamatan(kec);
+    onLocationSelect(addr, kec, dist, coords);
+  }, [calculateDistance, onLocationSelect]);
+
+  const handleMapCoordinateSelect = useCallback(async (coords: { lat: number; lng: number }) => {
+    let addr = `Pin-point (${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)})`;
+    try {
+      const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${coords.lat}&lon=${coords.lng}`);
+      const data = await response.json();
+      if (data && data.display_name) {
+        addr = data.display_name;
+      }
+    } catch (err) {
+      console.warn('Reverse geocoding error:', err);
+    }
+    updateLocationState(coords, addr);
+  }, [updateLocationState]);
+
   const handlePlaceSelect = async (place: PlaceResult) => {
     if (!place.location) return;
 
@@ -109,20 +141,8 @@ export const LocationPickerMap: React.FC<LocationPickerMapProps> = ({
       lng: place.location.lng
     };
 
-    const dist = calculateDistance(coords);
-    
-    setSelectedCoords(coords);
-    setSelectedAddress(place.formattedAddress || '');
-    setDistanceKm(dist);
-    setKecamatan('Medan'); 
     setMapZoom(16);
-
-    onLocationSelect(
-      place.formattedAddress || '',
-      'Medan',
-      dist,
-      coords
-    );
+    updateLocationState(coords, place.formattedAddress || 'Alamat Terpilih');
   };
 
   const handleGetCurrentLocation = () => {
@@ -139,11 +159,9 @@ export const LocationPickerMap: React.FC<LocationPickerMapProps> = ({
           lng: position.coords.longitude
         };
 
-        const dist = calculateDistance(coords);
         let addr = `Lokasi GPS Terdeteksi (${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)})`;
 
         try {
-          // Reverse Geocoding via Nominatim OpenStreetMap
           const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${coords.lat}&lon=${coords.lng}`);
           const data = await response.json();
           if (data && data.display_name) {
@@ -153,22 +171,31 @@ export const LocationPickerMap: React.FC<LocationPickerMapProps> = ({
           console.error('Reverse geocoding error:', error);
         }
 
-        setSelectedCoords(coords);
-        setSelectedAddress(addr);
-        setDistanceKm(dist);
         setIsLocating(false);
         setMapZoom(16);
-
-        onLocationSelect(addr, 'Medan', dist, coords);
+        updateLocationState(coords, addr);
       },
       (error) => {
         console.error('Error GPS:', error);
         setIsLocating(false);
-        alert('Gagal mendapatkan lokasi. Pastikan GPS aktif dan Anda telah memberikan izin lokasi pada browser.');
+        alert('Gagal mendapatkan lokasi GPS. Pastikan izin lokasi/GPS aktif di perangkat Anda.');
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
   };
+
+  const markerEventHandlers = useMemo(
+    () => ({
+      dragend(e: any) {
+        const marker = e.target;
+        if (marker != null) {
+          const latLng = marker.getLatLng();
+          handleMapCoordinateSelect({ lat: latLng.lat, lng: latLng.lng });
+        }
+      },
+    }),
+    [handleMapCoordinateSelect]
+  );
 
   useEffect(() => {
     const newDist = calculateDistance(selectedCoords);
@@ -190,7 +217,7 @@ export const LocationPickerMap: React.FC<LocationPickerMapProps> = ({
               Pin-Point Lokasi Presisi
             </h4>
             <p className="text-[11px] text-stone-500">
-              Cari alamat atau gunakan GPS untuk akurasi penjemputan
+              Klik peta / geser pin / gunakan GPS untuk penjemputan akurat
             </p>
           </div>
         </div>
@@ -208,7 +235,7 @@ export const LocationPickerMap: React.FC<LocationPickerMapProps> = ({
 
       <AddressPicker onPlaceSelect={handlePlaceSelect} />
 
-      <div className="relative w-full h-56 rounded-2xl overflow-hidden border border-stone-200 shadow-inner z-0">
+      <div className="relative w-full h-60 rounded-2xl overflow-hidden border border-stone-200 shadow-inner z-0">
         <MapContainer 
           center={[MEDAN_BASE.lat, MEDAN_BASE.lng]} 
           zoom={13} 
@@ -220,7 +247,12 @@ export const LocationPickerMap: React.FC<LocationPickerMapProps> = ({
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
           <MapController position={selectedCoords} zoom={mapZoom} />
-          <Marker position={[selectedCoords.lat, selectedCoords.lng]} />
+          <MapClickHandler onMapClick={handleMapCoordinateSelect} />
+          <Marker 
+            position={[selectedCoords.lat, selectedCoords.lng]} 
+            draggable={true}
+            eventHandlers={markerEventHandlers}
+          />
         </MapContainer>
 
         {/* Floating Overlays */}
@@ -242,7 +274,10 @@ export const LocationPickerMap: React.FC<LocationPickerMapProps> = ({
 
         <div className="absolute bottom-3 left-3 right-3 z-[1000] bg-white/95 backdrop-blur-md p-3 rounded-xl border border-stone-100 shadow-lg flex items-center justify-between">
           <div className="flex-1 min-w-0 pr-4">
-            <div className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">Alamat Terpilih</div>
+            <div className="flex items-center gap-1 text-[10px] font-bold text-stone-400 uppercase tracking-widest">
+              <Touchpad className="w-3 h-3 text-emerald-600" />
+              <span>Alamat (Geser Pin / Klik Peta)</span>
+            </div>
             <div className="text-[11px] font-bold text-stone-900 truncate">{selectedAddress || 'Belum diisi'}</div>
           </div>
           <div className="shrink-0 flex flex-col items-end">
@@ -254,3 +289,4 @@ export const LocationPickerMap: React.FC<LocationPickerMapProps> = ({
     </div>
   );
 };
+

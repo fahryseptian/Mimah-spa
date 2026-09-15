@@ -26,13 +26,16 @@ import {
 import { useApp } from '../context/AppContext';
 import { PWAInstallButton } from './Common/PWAInstallButton';
 import { supabase } from '../lib/supabase';
+import { MEDAN_RADIUS_OPTIONS } from '../types';
 
 export const Navbar: React.FC = () => {
   const { 
     userRole, 
     setUserRole, 
     selectedCity, 
-    setSelectedCity, 
+    setSelectedCity,
+    selectedRadiusKm,
+    setSelectedRadiusKm, 
     cities, 
     activeCustomerTab, 
     setActiveCustomerTab,
@@ -142,19 +145,20 @@ export const Navbar: React.FC = () => {
             {userRole === 'admin' ? (
               // ADMIN NAVBAR LINKS
               [
-                { id: 'analytics', label: 'Ringkasan', icon: TrendingUp },
+                { id: 'analytics', label: 'Dashboard', icon: TrendingUp },
+                { id: 'monitoring', label: 'Peta GPS', icon: MapPin },
                 { id: 'therapists', label: 'Mitra', icon: Users, badge: pendingAppsCount },
                 { id: 'transactions', label: 'Pesanan', icon: FileText, badge: activeOrdersCount },
                 { id: 'inventory', label: 'Stok', icon: Package },
                 { id: 'services', label: 'Layanan', icon: Sliders },
                 { id: 'vouchers', label: 'Voucher', icon: Tag },
-                { id: 'tariff', label: 'Tarif', icon: Settings },
-                { id: 'finance', label: 'Laba', icon: Coins },
+                { id: 'finance', label: 'Keuangan', icon: Coins },
+                { id: 'settings', label: 'Pengaturan', icon: Settings },
               ].map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveAdminTab(tab.id)}
-                  className={`px-3 py-2 rounded-2xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 relative ${
+                  className={`px-3 py-2 rounded-2xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 relative cursor-pointer ${
                     activeAdminTab === tab.id
                       ? 'bg-stone-900 text-white shadow-md'
                       : 'text-stone-500 hover:bg-stone-50 hover:text-stone-900'
@@ -163,7 +167,7 @@ export const Navbar: React.FC = () => {
                   <tab.icon className={`w-3.5 h-3.5 ${activeAdminTab === tab.id ? 'text-emerald-400' : 'text-stone-400'}`} />
                   <span>{tab.label}</span>
                   {tab.badge && tab.badge > 0 ? (
-                    <span className="w-4 h-4 rounded-full bg-amber-500 text-stone-900 text-[9px] font-black flex items-center justify-center shadow-sm">
+                    <span className="px-1.5 py-0.5 rounded-full bg-amber-400 text-stone-900 text-[9px] font-black flex items-center justify-center shadow-xs">
                       {tab.badge}
                     </span>
                   ) : null}
@@ -185,7 +189,7 @@ export const Navbar: React.FC = () => {
                 <button
                   key={tab.id}
                   onClick={() => setActiveCustomerTab(tab.id as any)}
-                  className={`px-5 py-2.5 rounded-2xl text-sm font-bold transition-all flex items-center gap-2.5 ${
+                  className={`px-5 py-2.5 rounded-2xl text-sm font-bold transition-all flex items-center gap-2.5 cursor-pointer ${
                     activeCustomerTab === tab.id
                       ? 'bg-emerald-50 text-emerald-800 shadow-inner border border-emerald-100'
                       : 'text-stone-500 hover:bg-stone-50 hover:text-stone-900'
@@ -201,38 +205,66 @@ export const Navbar: React.FC = () => {
               <>
                 <div className="w-px h-8 bg-stone-100 mx-4" />
 
-                {/* City Selector */}
+                {/* Radius Distance Selector */}
                 <div className="relative group">
                   <button 
                     onClick={() => setIsCityDropdownOpen(!isCityDropdownOpen)}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-stone-50 hover:bg-stone-100 text-stone-700 rounded-2xl border border-stone-100 text-sm font-bold transition-all cursor-pointer active:scale-95"
+                    className="flex items-center gap-2 px-4 py-2.5 bg-emerald-50/60 hover:bg-emerald-100/60 text-emerald-950 rounded-2xl border border-emerald-200/60 text-xs font-bold transition-all cursor-pointer active:scale-95 shadow-xs"
                   >
-                    <MapPin className="w-4 h-4 text-emerald-500" />
-                    <span>{selectedCity}</span>
-                    <ChevronDown className={`w-3.5 h-3.5 opacity-50 transition-transform ${isCityDropdownOpen ? 'rotate-180' : 'group-hover:rotate-180'}`} />
+                    <MapPin className="w-4 h-4 text-emerald-600" />
+                    <span>Radius {selectedRadiusKm} KM Medan</span>
+                    <ChevronDown className={`w-3.5 h-3.5 text-emerald-700 transition-transform ${isCityDropdownOpen ? 'rotate-180' : 'group-hover:rotate-180'}`} />
                   </button>
                   
-                  <div className={`absolute right-0 top-full mt-3 w-64 bg-white rounded-3xl shadow-premium border border-stone-100 py-4 z-50 transition-all ${
+                  <div className={`absolute right-0 top-full mt-3 w-80 bg-white rounded-3xl shadow-premium border border-stone-200/80 p-4 z-50 transition-all ${
                     isCityDropdownOpen 
                       ? 'opacity-100 visible translate-y-0' 
                       : 'opacity-0 invisible group-hover:opacity-100 group-hover:visible translate-y-2 group-hover:translate-y-0'
                   }`}>
-                    <div className="px-5 py-2 text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2">Pilih Zona Layanan</div>
-                    {cities.map((c) => (
-                      <button
-                        key={c.city}
-                        onClick={() => {
-                          setSelectedCity(c.city);
-                          setIsCityDropdownOpen(false);
-                        }}
-                        className={`w-full text-left px-5 py-3 text-sm font-bold flex items-center justify-between hover:bg-emerald-50 transition-colors cursor-pointer ${
-                          selectedCity === c.city ? 'text-emerald-800 bg-emerald-50/50' : 'text-stone-600'
-                        }`}
-                      >
-                        <span>{c.city}</span>
-                        {selectedCity === c.city && <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-sm" />}
-                      </button>
-                    ))}
+                    <div className="px-2 pb-3 mb-2 border-b border-stone-100">
+                      <div className="text-xs font-black text-stone-900 flex items-center gap-1.5">
+                        <MapPin className="w-3.5 h-3.5 text-emerald-600" />
+                        <span>Radius Jarak Layanan (Medan)</span>
+                      </div>
+                      <p className="text-[10px] text-stone-500 mt-0.5">
+                        Semua kecamatan Medan terlayani berdasarkan jarak radius KM dari pos terapis terdekat (Max 25 KM).
+                      </p>
+                    </div>
+
+                    <div className="space-y-1.5 max-h-[320px] overflow-y-auto pr-1">
+                      {MEDAN_RADIUS_OPTIONS.map((opt) => (
+                        <button
+                          key={opt.km}
+                          onClick={() => {
+                            setSelectedRadiusKm(opt.km);
+                            setSelectedCity('Kota Medan');
+                            setIsCityDropdownOpen(false);
+                          }}
+                          className={`w-full text-left p-3 rounded-2xl text-xs transition-all cursor-pointer flex items-center justify-between border ${
+                            selectedRadiusKm === opt.km 
+                              ? 'bg-emerald-50 border-emerald-300 text-emerald-950 font-bold shadow-xs' 
+                              : 'bg-stone-50/50 border-stone-100 text-stone-700 hover:bg-stone-100 hover:border-stone-200'
+                          }`}
+                        >
+                          <div className="space-y-0.5">
+                            <div className="flex items-center gap-2">
+                              <span className="font-extrabold">{opt.label}</span>
+                              {opt.badge && (
+                                <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-900 border border-emerald-200">
+                                  {opt.badge}
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-[10px] text-stone-500 font-normal">{opt.description}</div>
+                          </div>
+                          <div className="text-right shrink-0 ml-2">
+                            <div className="text-xs font-bold text-emerald-800">
+                              ~Rp {(opt.estimatedFee).toLocaleString('id-ID')}
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </>

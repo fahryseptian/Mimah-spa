@@ -15,24 +15,23 @@ import {
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { formatRupiah, calculateTransportFare } from '../../utils/formatters';
-import { PlaceType } from '../../types';
+import { PlaceType, MEDAN_RADIUS_OPTIONS } from '../../types';
 
 export const TransportCalculator: React.FC = () => {
   const { 
     selectedCity, 
-    cities, 
     tariffConfig, 
     setIsBookingModalOpen,
     setSelectedKecamatan,
-    selectedKecamatan
+    selectedKecamatan,
+    selectedRadiusKm,
+    setSelectedRadiusKm
   } = useApp();
 
   const [distanceKm, setDistanceKm] = useState<number>(3.5);
   const [timeSlot, setTimeSlot] = useState<string>('14:00');
   const [isRainy, setIsRainy] = useState<boolean>(false);
   const [placeType, setPlaceType] = useState<PlaceType>('rumah');
-
-  const currentCityObj = cities.find(c => c.city === selectedCity) || cities[0];
 
   const breakdown = calculateTransportFare(distanceKm, timeSlot, isRainy, placeType, tariffConfig);
 
@@ -78,25 +77,40 @@ export const TransportCalculator: React.FC = () => {
         {/* Left Inputs (7 cols) */}
         <div className="lg:col-span-7 space-y-6">
           
-          {/* Location & Kecamatan */}
+          {/* Radius Selection Cards */}
           <div className="space-y-3">
             <label className="text-xs font-bold text-stone-700 uppercase tracking-wider flex items-center gap-1.5">
               <MapPin className="w-4 h-4 text-emerald-600" />
-              <span>Lokasi & Kecamatan Klien ({selectedCity})</span>
+              <span>Pilih Tier Radius Layanan Medan</span>
             </label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {currentCityObj.kecamatans.slice(0, 6).map((kec) => (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              {MEDAN_RADIUS_OPTIONS.map((opt) => (
                 <button
-                  key={kec}
-                  onClick={() => setSelectedKecamatan(kec)}
-                  className={`px-3 py-2 text-xs rounded-xl border text-left flex items-center justify-between transition-all ${
-                    selectedKecamatan === kec 
-                      ? 'border-emerald-600 bg-emerald-50 text-emerald-900 font-semibold shadow-xs' 
-                      : 'border-stone-200 hover:border-stone-300 text-stone-700'
+                  key={opt.km}
+                  onClick={() => {
+                    setSelectedRadiusKm(opt.km);
+                    setDistanceKm(opt.km);
+                  }}
+                  className={`p-3 text-xs rounded-2xl border text-left flex items-start justify-between transition-all cursor-pointer ${
+                    distanceKm === opt.km || selectedRadiusKm === opt.km
+                      ? 'border-emerald-600 bg-emerald-50/80 text-emerald-950 font-bold shadow-xs' 
+                      : 'border-stone-200 hover:border-emerald-200 bg-stone-50/50 text-stone-700'
                   }`}
                 >
-                  <span>Kec. {kec}</span>
-                  {selectedKecamatan === kec && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />}
+                  <div className="space-y-0.5">
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-extrabold">{opt.label}</span>
+                      {opt.badge && (
+                        <span className="text-[9px] font-black px-1.5 py-0.2 rounded-full bg-emerald-600 text-white">
+                          {opt.badge}
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-[10px] text-stone-500 font-medium">{opt.description}</div>
+                  </div>
+                  {(distanceKm === opt.km || selectedRadiusKm === opt.km) && (
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                  )}
                 </button>
               ))}
             </div>
@@ -239,18 +253,13 @@ export const TransportCalculator: React.FC = () => {
               <div className="space-y-3 mt-4 text-xs">
                 
                 <div className="flex justify-between items-center text-stone-500">
-                  <span>Tarif Dasar (0 - 3 KM):</span>
+                  <span>Tarif Dasar Minimal (&le; 3 KM):</span>
                   <span>{formatRupiah(breakdown.base)}</span>
                 </div>
 
-                {breakdown.freePromoDiscount > 0 ? (
-                  <div className="flex justify-between items-center text-emerald-400 font-semibold bg-emerald-50/60 px-2.5 py-1.5 rounded-lg border border-emerald-900">
-                    <span>✨ Diskon Promo Radius &le;3 KM:</span>
-                    <span>-{formatRupiah(breakdown.freePromoDiscount)}</span>
-                  </div>
-                ) : (
+                {distanceKm > 3 && breakdown.distanceFare > 0 && (
                   <div className="flex justify-between items-center text-stone-500">
-                    <span>Jarak Tambahan ({Math.max(0, distanceKm - tariffConfig.freeRadiusKm).toFixed(1)} km &times; {formatRupiah(tariffConfig.perKmFare)}):</span>
+                    <span>Jarak Tambahan ({(distanceKm - 3).toFixed(1)} km &times; {formatRupiah(tariffConfig.perKmFare)}):</span>
                     <span>+{formatRupiah(breakdown.distanceFare)}</span>
                   </div>
                 )}
