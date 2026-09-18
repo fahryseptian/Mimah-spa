@@ -1,15 +1,23 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { MapPin, Navigation, RefreshCw, ExternalLink, Touchpad } from 'lucide-react';
-import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from 'react-leaflet';
+import { MapPin, Navigation, RefreshCw, ExternalLink, Touchpad, Car, Route } from 'lucide-react';
+import { MapContainer, TileLayer, Marker, Polyline, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import { AddressPicker, PlaceResult } from '../Maps/AddressPicker';
+import { getDrivingRoute } from '../../utils/routingService';
 
-// Fix Leaflet icon issue
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+// Custom Marker Icons for Leaflet
+const baseIcon = L.divIcon({
+  className: 'custom-base-pin',
+  html: `<div style="background-color: #065f46; color: white; width: 32px; height: 32px; borderRadius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 3px solid white; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>`,
+  iconSize: [32, 32],
+  iconAnchor: [16, 16],
+});
+
+const destinationIcon = L.divIcon({
+  className: 'custom-dest-pin',
+  html: `<div style="background-color: #e11d48; color: white; width: 34px; height: 34px; borderRadius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 3px solid white; box-shadow: 0 4px 8px rgba(0,0,0,0.35);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg></div>`,
+  iconSize: [34, 34],
+  iconAnchor: [17, 34],
 });
 
 interface LocationPickerMapProps {
@@ -56,18 +64,6 @@ const getKecamatanCoords = (kec: string) => {
   return match ? KECAMATAN_COORDS[match] : MEDAN_BASE;
 };
 
-// Haversine formula
-const calculateHaversine = (lat1: number, lon1: number, lat2: number, lon2: number) => {
-  const R = 6371; // km
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-            Math.sin(dLon/2) * Math.sin(dLon/2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  return R * c;
-};
-
 const MapController = ({ position, zoom }: { position: { lat: number; lng: number }; zoom?: number }) => {
   const map = useMap();
   useEffect(() => {
@@ -98,26 +94,36 @@ export const LocationPickerMap: React.FC<LocationPickerMapProps> = ({
   const [mapZoom, setMapZoom] = useState<number>(13);
   const [isLocating, setIsLocating] = useState<boolean>(false);
   const [selectedAddress, setSelectedAddress] = useState<string>(initialAddress || 'Pusat Mimah Spa, Medan Baru');
-  const [distanceKm, setDistanceKm] = useState<number>(0);
+  const [distanceKm, setDistanceKm] = useState<number>(1.5);
+  const [durationMins, setDurationMins] = useState<number>(8);
+  const [routeCoords, setRouteCoords] = useState<[number, number][]>([]);
+  const [isCalculatingRoute, setIsCalculatingRoute] = useState<boolean>(false);
+  const [roadName, setRoadName] = useState<string>('');
   const [kecamatan, setKecamatan] = useState<string>(initialKecamatan || 'Medan Baru');
 
   const activeBase = getKecamatanCoords(originKecamatan || 'Medan Baru');
 
-  const calculateDistance = useCallback((coords: { lat: number; lng: number }) => {
-    if (!coords || isNaN(coords.lat) || isNaN(coords.lng)) return 2.5;
-    const dist = calculateHaversine(activeBase.lat, activeBase.lng, coords.lat, coords.lng);
-    const result = Math.max(1, Math.round(dist * 10) / 10);
-    return isNaN(result) ? 2.5 : result;
-  }, [activeBase]);
-
-  const updateLocationState = useCallback((coords: { lat: number; lng: number }, addr: string, kec: string = 'Medan') => {
-    const dist = calculateDistance(coords);
+  // Fetch real car driving route
+  const updateRouteAndLocation = useCallback(async (
+    coords: { lat: number; lng: number },
+    addr: string,
+    kec: string = 'Medan'
+  ) => {
     setSelectedCoords(coords);
     setSelectedAddress(addr);
-    setDistanceKm(dist);
     setKecamatan(kec);
-    onLocationSelect(addr, kec, dist, coords);
-  }, [calculateDistance, onLocationSelect]);
+    setIsCalculatingRoute(true);
+
+    const route = await getDrivingRoute(activeBase.lat, activeBase.lng, coords.lat, coords.lng);
+
+    setDistanceKm(route.distanceKm);
+    setDurationMins(route.durationMinutes);
+    setRouteCoords(route.coordinates);
+    setRoadName(route.roadName || '');
+    setIsCalculatingRoute(false);
+
+    onLocationSelect(addr, kec, route.distanceKm, coords);
+  }, [activeBase, onLocationSelect]);
 
   const handleMapCoordinateSelect = useCallback(async (coords: { lat: number; lng: number }) => {
     let addr = `Pin-point (${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)})`;
@@ -130,8 +136,8 @@ export const LocationPickerMap: React.FC<LocationPickerMapProps> = ({
     } catch (err) {
       console.warn('Reverse geocoding error:', err);
     }
-    updateLocationState(coords, addr);
-  }, [updateLocationState]);
+    updateRouteAndLocation(coords, addr);
+  }, [updateRouteAndLocation]);
 
   const handlePlaceSelect = async (place: PlaceResult) => {
     if (!place.location) return;
@@ -141,8 +147,8 @@ export const LocationPickerMap: React.FC<LocationPickerMapProps> = ({
       lng: place.location.lng
     };
 
-    setMapZoom(16);
-    updateLocationState(coords, place.formattedAddress || 'Alamat Terpilih');
+    setMapZoom(15);
+    updateRouteAndLocation(coords, place.formattedAddress || 'Alamat Terpilih');
   };
 
   const handleGetCurrentLocation = () => {
@@ -172,8 +178,8 @@ export const LocationPickerMap: React.FC<LocationPickerMapProps> = ({
         }
 
         setIsLocating(false);
-        setMapZoom(16);
-        updateLocationState(coords, addr);
+        setMapZoom(15);
+        updateRouteAndLocation(coords, addr);
       },
       (error) => {
         console.error('Error GPS:', error);
@@ -197,27 +203,27 @@ export const LocationPickerMap: React.FC<LocationPickerMapProps> = ({
     [handleMapCoordinateSelect]
   );
 
+  // Initial load route calculation
   useEffect(() => {
-    const newDist = calculateDistance(selectedCoords);
-    if (newDist !== distanceKm) {
-      setDistanceKm(newDist);
-      onLocationSelect(selectedAddress, kecamatan, newDist, selectedCoords);
-    }
-  }, [activeBase, selectedCoords, calculateDistance, distanceKm, selectedAddress, kecamatan, onLocationSelect]);
+    updateRouteAndLocation(selectedCoords, selectedAddress, kecamatan);
+  }, [activeBase.lat, activeBase.lng]);
 
   return (
     <div className="space-y-4 bg-stone-50 p-4 rounded-[2rem] border border-stone-200">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold">
-            <MapPin className="w-4 h-4" />
+            <Route className="w-4 h-4" />
           </div>
           <div>
-            <h4 className="text-xs font-bold text-stone-900 uppercase tracking-wider">
-              Pin-Point Lokasi Presisi
+            <h4 className="text-xs font-bold text-stone-900 uppercase tracking-wider flex items-center gap-1.5">
+              <span>Navigasi Jalur Mobil Real</span>
+              <span className="text-[9px] bg-emerald-700 text-white font-extrabold px-1.5 py-0.5 rounded-full">
+                Jalan Raya
+              </span>
             </h4>
             <p className="text-[11px] text-stone-500">
-              Klik peta / geser pin / gunakan GPS untuk penjemputan akurat
+              Perhitungan jarak mengikuti rute jalan raya kendaraan mobil/motor sesungguhnya
             </p>
           </div>
         </div>
@@ -235,7 +241,7 @@ export const LocationPickerMap: React.FC<LocationPickerMapProps> = ({
 
       <AddressPicker onPlaceSelect={handlePlaceSelect} />
 
-      <div className="relative w-full h-60 rounded-2xl overflow-hidden border border-stone-200 shadow-inner z-0">
+      <div className="relative w-full h-64 rounded-2xl overflow-hidden border border-stone-200 shadow-inner z-0">
         <MapContainer 
           center={[MEDAN_BASE.lat, MEDAN_BASE.lng]} 
           zoom={13} 
@@ -248,45 +254,88 @@ export const LocationPickerMap: React.FC<LocationPickerMapProps> = ({
           />
           <MapController position={selectedCoords} zoom={mapZoom} />
           <MapClickHandler onMapClick={handleMapCoordinateSelect} />
+          
+          {/* Base Position Marker */}
+          <Marker 
+            position={[activeBase.lat, activeBase.lng]} 
+            icon={baseIcon}
+          />
+
+          {/* Customer Destination Marker */}
           <Marker 
             position={[selectedCoords.lat, selectedCoords.lng]} 
             draggable={true}
             eventHandlers={markerEventHandlers}
+            icon={destinationIcon}
           />
+
+          {/* Real Driving Route Polyline */}
+          {routeCoords.length > 0 && (
+            <Polyline 
+              positions={routeCoords} 
+              pathOptions={{ 
+                color: '#059669', 
+                weight: 5, 
+                opacity: 0.9, 
+                lineCap: 'round',
+                lineJoin: 'round'
+              }} 
+            />
+          )}
         </MapContainer>
 
-        {/* Floating Overlays */}
+        {/* Floating Header Badges */}
         <div className="absolute top-3 left-3 right-3 flex items-center justify-between pointer-events-none z-[1000]">
-          <span className="px-3 py-1.5 bg-white/90 backdrop-blur-md rounded-xl text-[10px] font-bold text-stone-800 border border-stone-200 shadow-sm flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            Pos {therapistName ? `${therapistName} (${originKecamatan})` : 'Mimah HQ'}
+          <span className="px-3 py-1.5 bg-white/95 backdrop-blur-md rounded-xl text-[10px] font-bold text-stone-800 border border-stone-200 shadow-sm flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
+            <span>Pos {therapistName ? `${therapistName} (${originKecamatan})` : 'Mimah HQ'}</span>
           </span>
           
           <a
-            href={`https://www.google.com/maps/search/?api=1&query=${selectedCoords.lat},${selectedCoords.lng}`}
+            href={`https://www.google.com/maps/dir/?api=1&origin=${activeBase.lat},${activeBase.lng}&destination=${selectedCoords.lat},${selectedCoords.lng}&travelmode=driving`}
             target="_blank"
             rel="noopener noreferrer"
             className="px-3 py-1.5 bg-stone-900 text-white rounded-xl text-[10px] font-bold flex items-center gap-1.5 hover:bg-black transition-all shadow-lg pointer-events-auto cursor-pointer"
           >
-            Google Maps <ExternalLink className="w-3 h-3" />
+            <Car className="w-3 h-3 text-emerald-400" />
+            <span>Buka Rute Navigasi</span>
+            <ExternalLink className="w-3 h-3" />
           </a>
         </div>
 
+        {/* Bottom Route Summary Overlay */}
         <div className="absolute bottom-3 left-3 right-3 z-[1000] bg-white/95 backdrop-blur-md p-3 rounded-xl border border-stone-100 shadow-lg flex items-center justify-between">
-          <div className="flex-1 min-w-0 pr-4">
-            <div className="flex items-center gap-1 text-[10px] font-bold text-stone-400 uppercase tracking-widest">
-              <Touchpad className="w-3 h-3 text-emerald-600" />
-              <span>Alamat (Geser Pin / Klik Peta)</span>
+          <div className="flex-1 min-w-0 pr-3">
+            <div className="flex items-center gap-1 text-[10px] font-bold text-stone-500 uppercase tracking-wider">
+              <Car className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Rute Jalur Kendaraan Mobil / Motor</span>
+              {isCalculatingRoute && <RefreshCw className="w-3 h-3 animate-spin text-emerald-600 ml-1" />}
             </div>
-            <div className="text-[11px] font-bold text-stone-900 truncate">{selectedAddress || 'Belum diisi'}</div>
+            <div className="text-[11px] font-bold text-stone-900 truncate mt-0.5">
+              {selectedAddress || 'Belum diisi'}
+            </div>
+            {roadName && (
+              <div className="text-[10px] text-emerald-700 font-medium truncate">
+                Jalur via: {roadName}
+              </div>
+            )}
           </div>
-          <div className="shrink-0 flex flex-col items-end">
-            <div className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Estimasi Jarak</div>
-            <div className="text-sm font-black text-stone-900">{distanceKm} KM</div>
+
+          <div className="shrink-0 flex flex-col items-end pl-3 border-l border-stone-200">
+            <div className="text-[10px] font-bold text-emerald-700 uppercase tracking-widest flex items-center gap-1">
+              <span>Jarak Jalan</span>
+            </div>
+            <div className="text-base font-black text-stone-900 leading-tight">
+              {distanceKm} KM
+            </div>
+            <div className="text-[10px] font-bold text-stone-500">
+              ~{durationMins} mnt perjalanan
+            </div>
           </div>
         </div>
       </div>
     </div>
   );
 };
+
 

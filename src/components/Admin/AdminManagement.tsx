@@ -914,10 +914,10 @@ export const AdminManagement: React.FC = () => {
                   <h4 className="text-xs font-black text-stone-800 uppercase tracking-widest border-b border-stone-100 pb-2">Tarif Transportasi</h4>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     {[
-                      { key: 'baseFare', label: 'Biaya Dasar (Rp)' },
-                      { key: 'perKmFare', label: 'Biaya per KM (Rp)' },
-                      { key: 'freeRadiusKm', label: 'Radius Bebas (KM)' },
-                      { key: 'nightSurcharge', label: 'Insentif Malam (Rp)' }
+                      { key: 'baseFare', label: 'Biaya Dasar Minimal (Rp)' },
+                      { key: 'perKmFare', label: 'Biaya Tambahan per KM (Rp)' },
+                      { key: 'apartmentSurcharge', label: 'Tambahan Akses Gedung/Apartemen (Rp)' },
+                      { key: 'nightSurcharge', label: 'Insentif Jam Malam (Rp)' }
                     ].map((field) => (
                       <div key={field.key} className="space-y-2">
                         <label className="text-[11px] font-black text-stone-400 uppercase tracking-widest">{field.label}</label>

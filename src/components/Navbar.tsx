@@ -85,7 +85,7 @@ export const Navbar: React.FC = () => {
             ) : (
               <>
                 <span className="bg-amber-400 text-stone-900 px-2 py-0.5 rounded-full text-[8px] uppercase font-black">Exclusive</span>
-                <p className="truncate opacity-90">Kode <span className="font-mono bg-white/20 px-1.5 rounded">RELAKS50</span>: Diskon Rp 25.000 + Bebas Ongkir Medan!</p>
+                <p className="truncate opacity-90">Kode <span className="font-mono bg-white/20 px-1.5 rounded">RELAKS50</span>: Diskon Rp 25.000 + Layanan Terapis Berpengalaman!</p>
               </>
             )}
           </div>

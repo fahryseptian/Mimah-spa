@@ -255,7 +255,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        parsed.freeRadiusKm = 0;
+        delete parsed.freeRadiusKm;
         return parsed;
       } catch (e) {}
     }

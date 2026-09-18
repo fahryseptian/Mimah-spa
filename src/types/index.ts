@@ -102,7 +102,6 @@ export interface ServiceItem {
 
 export interface TransportTariffConfig {
   baseFare: number;
-  freeRadiusKm: number;
   perKmFare: number;
   nightSurcharge: number;
   weatherSurcharge: number;
@@ -165,7 +164,6 @@ export interface TransportBreakdown {
   nightSurcharge: number;
   weatherSurcharge: number;
   placeTypeSurcharge: number;
-  freePromoDiscount: number;
   totalTransport: number;
 }
 

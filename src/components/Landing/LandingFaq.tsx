@@ -15,7 +15,7 @@ export const LandingFaq: React.FC = () => {
     },
     {
       q: 'Berapa biaya transportasi terapis ke alamat saya di Medan?',
-      a: 'Untuk jarak 0 s/d 3 km dari lokasi pos mitra terapis terdekat di Medan, biaya transport GRATIS (Rp 0). Di atas 3 km, dikenakan tarif transparan mulai Rp 2.500/km tanpa markup tersembunyi.'
+      a: 'Biaya transportasi dihitung transparan berdasarkan jarak rute jalan raya (bukan garis lurus) dari pos mitra terapis terdekat di Medan. Tarif dasar minimal Rp 10.000 untuk jarak ≤ 3 km, dan di atas 3 km ditambah biaya jarak Rp 2.500/km tanpa markup.'
     },
     {
       q: 'Bagaimana standar kualifikasi mitra terapis Mimah Spa?',

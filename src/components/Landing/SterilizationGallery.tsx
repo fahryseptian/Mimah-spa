@@ -30,13 +30,13 @@ export const SterilizationGallery: React.FC = () => {
       <div className="text-center space-y-3">
         <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full text-[11px] font-bold uppercase tracking-wider border border-emerald-200">
           <FlaskConical className="w-3.5 h-3.5" />
-          <span>Komitmen Higienitas Medis</span>
+          <span>Komitmen Kehigienisan Bintang Lima</span>
         </div>
         <h2 className="text-2xl sm:text-4xl font-bold font-serif-display text-stone-900 tracking-tight">
-          Standard Sterilisasi Mimah Spa
+          Standar Sterilisasi Peralatan Mimah Spa
         </h2>
-        <p className="text-sm sm:text-base text-stone-500 max-w-2xl mx-auto">
-          Keamanan Anda adalah prioritas kami. Kami menerapkan protokol kebersihan ketat layaknya di klinik medis profesional.
+        <p className="text-sm sm:text-base text-stone-500 max-w-2xl mx-auto font-medium">
+          Kesehatan & kenyamanan Anda adalah prioritas utama kami. Kami menerapkan standar kebersihan medis ketat di setiap sesi pemesanan.
         </p>
       </div>
 

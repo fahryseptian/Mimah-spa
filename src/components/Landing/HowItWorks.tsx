@@ -5,8 +5,8 @@ export const HowItWorks: React.FC = () => {
   const steps = [
     {
       step: 'Langkah 1',
-      title: 'Pilih Layanan & Waktu',
-      description: 'Pilih jenis perawatan spa, durasi yang diinginkan, serta opsi terapis wanita bersertifikat BNSP sesuai preferensi Anda.',
+      title: 'Pilih Layanan & Waktu Sesi',
+      description: 'Tentukan jenis perawatan spa, durasi, serta waktu kedatangan terapis wanita bersertifikat BNSP sesuai keinginan Anda.',
       icon: <CalendarCheck className="w-6 h-6" />,
       color: 'bg-emerald-50 text-emerald-700',
       border: 'border-emerald-100/80'
@@ -14,15 +14,15 @@ export const HowItWorks: React.FC = () => {
     {
       step: 'Langkah 2',
       title: 'Terapis Tiba di Lokasi',
-      description: 'Mitra terapis kami tiba tepat waktu membawa koper perlengkapan steril, sprei disposable, dan minyak aromaterapi murni.',
+      description: 'Mitra terapis profesional hadir tepat waktu membawa koper perlengkapan steril, sprei disposable sekali buang, & minyak aromaterapi murni.',
       icon: <ShieldCheck className="w-6 h-6" />,
       color: 'bg-amber-50 text-amber-700',
       border: 'border-amber-100/80'
     },
     {
       step: 'Langkah 3',
-      title: 'Relaksasi Maksimal',
-      description: 'Nikmati sentuhan pijat medis profesional bintang lima langsung di kenyamanan rumah, hotel, atau apartemen Anda.',
+      title: 'Nikmati Spa Bintang Lima',
+      description: 'Rasakan sensasi relaksasi maksimal dan kebugaran tubuh langsung di kenyamanan rumah, hotel, atau apartemen Anda.',
       icon: <Sparkles className="w-6 h-6" />,
       color: 'bg-teal-50 text-teal-700',
       border: 'border-teal-100/80'
@@ -34,13 +34,13 @@ export const HowItWorks: React.FC = () => {
       <div className="flex flex-col items-center text-center space-y-3 max-w-2xl mx-auto">
         <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-100 text-[10px] font-bold uppercase tracking-widest">
           <HeartHandshake className="w-3.5 h-3.5 text-emerald-600" />
-          <span>Proses Pemesanan Praktis</span>
+          <span>Alur Pemesanan Mudah & Cepat</span>
         </div>
         <h2 className="text-3xl sm:text-4xl font-bold font-serif-display text-stone-900 leading-tight">
-          Hadirkan Spa Mewah ke Rumah Anda <br className="hidden sm:block" /> Dalam 3 Langkah Mudah
+          Hadirkan Spa Mewah ke Rumah Anda <br className="hidden sm:block" /> Dalam 3 Langkah Praktis
         </h2>
-        <p className="text-stone-500 text-xs sm:text-sm leading-relaxed max-w-lg">
-          Tanpa ribet, tanpa kemacetan. Nikmati kenyamanan terapis profesional bersertifikat yang siap memanjakan tubuh Anda.
+        <p className="text-stone-500 text-xs sm:text-sm leading-relaxed max-w-lg font-medium">
+          Tanpa antre, tanpa kemacetan. Terapis wanita bersertifikat resmi siap melayani relaksasi tubuh Anda dengan standar higienis tinggi.
         </p>
       </div>
 

@@ -129,7 +129,7 @@ export const BookingStepDetails: React.FC<Props> = (props) => {
           <span className="text-[10px] font-extrabold bg-blue-50 text-blue-700 px-2 py-0.5 rounded-md border border-blue-100">⚡ Powered by Xendit</span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
           {/* QRIS Option */}
           <button
             type="button"
@@ -175,30 +175,6 @@ export const BookingStepDetails: React.FC<Props> = (props) => {
             <div>
               <div className="text-xs font-bold text-stone-900">Virtual Account</div>
               <div className="text-[10px] text-stone-500">BCA, Mandiri, BNI, BRI (VA)</div>
-            </div>
-          </button>
-
-          {/* Cash / COD Option */}
-          <button
-            type="button"
-            onClick={() => props.setPaymentMethod('cash')}
-            className={`p-3 rounded-xl border text-left flex flex-col justify-between h-24 transition-all relative ${
-              props.paymentMethod === 'cash'
-                ? 'border-emerald-600 bg-emerald-50/50 ring-1 ring-emerald-600 font-medium'
-                : 'border-stone-100 hover:border-stone-300 bg-white'
-            }`}
-          >
-            <div className="flex items-center justify-between w-full">
-              <Banknote className="w-5 h-5 text-emerald-600" />
-              {props.paymentMethod === 'cash' && (
-                <span className="w-4 h-4 rounded-full bg-emerald-600 flex items-center justify-center text-white">
-                  <Check className="w-2.5 h-2.5" />
-                </span>
-              )}
-            </div>
-            <div>
-              <div className="text-xs font-bold text-stone-900">Tunai (COD)</div>
-              <div className="text-[10px] text-stone-500">Bayar ke Terapis di Tempat</div>
             </div>
           </button>
         </div>

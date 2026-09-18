@@ -237,9 +237,9 @@ export const BookingWizard: React.FC = () => {
     setIsSubmitting(true);
 
     let paymentUrl = '';
-    let finalPaymentStatus: 'pending' | 'paid' = paymentMethod === 'cash' ? 'pending' : 'pending';
+    let finalPaymentStatus: 'pending' | 'paid' = 'pending';
 
-    // Call Xendit API for online payments
+    // Call Xendit API for online payments (QRIS & Virtual Account)
     if (paymentMethod === 'qris' || paymentMethod === 'transfer') {
       try {
         const response = await fetch('/api/create-xendit-invoice', {

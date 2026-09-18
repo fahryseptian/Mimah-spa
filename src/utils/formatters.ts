@@ -5,10 +5,10 @@ import {
   BookingItem,
   BookingStatus 
 } from '../types';
+import { estimateDrivingDistanceKm } from './routingService';
 
 export const DEFAULT_TARIFF: TransportTariffConfig = {
   baseFare: 10000,
-  freeRadiusKm: 0,
   perKmFare: 2500,
   nightSurcharge: 15000,
   weatherSurcharge: 10000,
@@ -40,7 +40,6 @@ export const calculateTransportFare = (
 
   let base = tariff?.baseFare ?? 10000;
   let distanceFare = 0;
-  let freePromoDiscount = 0;
 
   const baseRadius = 3;
   if (safeDistanceKm > baseRadius) {
@@ -56,7 +55,7 @@ export const calculateTransportFare = (
 
   const totalTransport = Math.max(
     0, 
-    base - freePromoDiscount + distanceFare + nightSurcharge + weatherSurcharge + placeTypeSurcharge
+    base + distanceFare + nightSurcharge + weatherSurcharge + placeTypeSurcharge
   );
 
   return {
@@ -66,7 +65,6 @@ export const calculateTransportFare = (
     nightSurcharge,
     weatherSurcharge,
     placeTypeSurcharge,
-    freePromoDiscount,
     totalTransport,
   };
 };
@@ -85,18 +83,7 @@ export const calculateDistanceKm = (lat1: number, lon1: number, lat2: number, lo
   if (isNaN(lat1) || isNaN(lon1) || isNaN(lat2) || isNaN(lon2) || lat1 == null || lon1 == null || lat2 == null || lon2 == null) {
     return 2.5;
   }
-  const R = 6371; // Radius of the earth in km
-  const dLat = (lat2 - lat1) * (Math.PI / 180);
-  const dLon = (lon2 - lon1) * (Math.PI / 180);
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
-    Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  const safeA = Math.min(1, Math.max(0, a));
-  const c = 2 * Math.atan2(Math.sqrt(safeA), Math.sqrt(1 - safeA));
-  const d = R * c; // Distance in km
-  const result = Math.max(1.2, Math.round(d * 10) / 10);
-  return isNaN(result) ? 2.5 : result;
+  return estimateDrivingDistanceKm(lat1, lon1, lat2, lon2);
 };
 
 export const findNearestAvailableTherapist = (therapists: any[], targetLat: number = 3.5952, targetLng: number = 98.6722): any | null => {

@@ -245,7 +245,7 @@ VITE_SUPABASE_ANON_KEY=Masukkan_Anon_Key_Supabase_Anda`}
                   <div className="relative z-10 max-w-3xl space-y-8">
                     <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-100/80 shadow-xs backdrop-blur-sm">
                       <Sparkles className="w-3.5 h-3.5 text-emerald-600 animate-pulse" />
-                      <span className="text-[10px] font-black tracking-widest uppercase">Layanan Wellness & Spa Home Service No. 1 di Medan</span>
+                      <span className="text-[10px] font-black tracking-widest uppercase">Pijat & Spa Home Service Keluarga No. 1 di Medan</span>
                     </div>
 
                     <h1 className="text-4xl sm:text-6xl font-bold font-serif-display leading-[1.12] tracking-tight text-stone-900">
@@ -254,7 +254,7 @@ VITE_SUPABASE_ANON_KEY=Masukkan_Anon_Key_Supabase_Anda`}
                     </h1>
 
                     <p className="text-base sm:text-lg text-stone-600 leading-relaxed max-w-2xl font-medium">
-                      Kembalikan kesegaran tubuh dan pikiran tanpa perlu menembus kemacetan. Terapis bersertifikat BNSP kami hadir membawa koper perlengkapan steril, sprei disposable, serta minyak aromaterapi murni langsung ke lokasi Anda.
+                      Pulihkan kesegaran tubuh dan pikiran tanpa perlu keluar rumah atau menembus kemacetan Medan. Terapis wanita terverifikasi BNSP hadir membawa koper perlengkapan steril, sprei <em>disposable</em> sekali buang, serta minyak aromaterapi murni langsung ke lokasi Anda.
                     </p>
 
                     <div className="flex flex-wrap items-center gap-4 pt-1">
@@ -262,7 +262,7 @@ VITE_SUPABASE_ANON_KEY=Masukkan_Anon_Key_Supabase_Anda`}
                         onClick={() => setIsBookingModalOpen(true)}
                         className="px-8 py-4 rounded-2xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-sm shadow-xl shadow-emerald-700/20 transition-all cursor-pointer active:scale-95 flex items-center gap-2.5"
                       >
-                        <span>Pesan Layanan Sekarang</span>
+                        <span>Pesan Spa Sekarang</span>
                         <ArrowRight className="w-4 h-4" />
                       </button>
                       <button 
@@ -276,17 +276,17 @@ VITE_SUPABASE_ANON_KEY=Masukkan_Anon_Key_Supabase_Anda`}
                         }}
                         className="px-7 py-4 rounded-2xl bg-white text-stone-700 font-bold text-sm border border-stone-200 hover:bg-stone-50 hover:border-emerald-300 transition-all cursor-pointer shadow-xs active:scale-95"
                       >
-                        Eksplor Layanan
+                        Lihat Katalog & Tarif
                       </button>
                     </div>
 
                     {/* Trust Proof Badges Grid */}
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-6 border-t border-stone-100">
                       {[
-                        { icon: ShieldCheck, label: 'Kualifikasi BNSP', sub: '100% Terapis Resmi' },
+                        { icon: ShieldCheck, label: 'Sertifikasi BNSP', sub: 'Terapis Wanita Resmi' },
                         { icon: Clock, label: 'Tiba Tepat Waktu', sub: 'Estimasi 30-45 Menit' },
-                        { icon: Award, label: 'Rating 4.9 / 5.0', sub: '3.800+ Ulasan Puas' },
-                        { icon: Heart, label: 'Higienis Medis', sub: 'Kit Steril & Disposable' },
+                        { icon: Award, label: 'Rating 4.9 / 5.0', sub: '3.800+ Pelanggan Medan' },
+                        { icon: Heart, label: 'Higienis & Steril', sub: 'Kit Disposable Sekali Pakai' },
                       ].map((item, i) => (
                         <div key={i} className="flex items-center gap-3 p-2.5 rounded-2xl bg-stone-50/60 border border-stone-100">
                           <item.icon className="w-5 h-5 text-emerald-600 shrink-0" />

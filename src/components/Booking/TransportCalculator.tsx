@@ -36,8 +36,8 @@ export const TransportCalculator: React.FC = () => {
   const breakdown = calculateTransportFare(distanceKm, timeSlot, isRainy, placeType, tariffConfig);
 
   const presetRoutes = [
-    { label: 'Dekat / Area Tetangga (1.5 km)', km: 1.5, desc: 'Bebas Ongkir Promo!' },
-    { label: 'Jarak Standar Kota (4.2 km)', km: 4.2, desc: 'Rute umum perkotaan' },
+    { label: 'Dekat / Area Inti (1.5 km)', km: 1.5, desc: 'Tarif Dasar Minimal' },
+    { label: 'Jarak Standar Kota (4.2 km)', km: 4.2, desc: 'Rute Jalan Raya Kota' },
     { label: 'Jarak Menengah Antar-Kecamatan (8.0 km)', km: 8.0, desc: 'Radius 5-10 km' },
     { label: 'Jarak Jauh Pinggiran (15.0 km)', km: 15.0, desc: 'Area luar batas kota' },
   ];
@@ -55,18 +55,18 @@ export const TransportCalculator: React.FC = () => {
             Simulasi & Estimasi Biaya Transportasi Terapis
           </h2>
           <p className="text-sm text-stone-500 mt-1 max-w-2xl">
-            Terapis Mimah Spa datang langsung menggunakan sepeda motor pribadi dengan koper perlengkapan steril. Hitung tarif ongkir jujur tanpa biaya tersembunyi.
+            Terapis Mimah Spa datang langsung membawa koper perlengkapan steril. Perhitungan jarak menggunakan navigasi rute jalan raya kendaraan mobil/motor sesungguhnya.
           </p>
         </div>
 
-        {/* Free promo highlight */}
-        <div className="bg-gradient-to-br from-emerald-600 to-teal-700 text-white rounded-xl p-3.5 flex items-center gap-3 shadow-soft shrink-0">
+        {/* Real Driving Route highlight */}
+        <div className="bg-gradient-to-br from-emerald-800 to-teal-900 text-white rounded-xl p-3.5 flex items-center gap-3 shadow-soft shrink-0 border border-emerald-700">
           <div className="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center font-bold text-lg">
-            3KM
+            RUTE
           </div>
           <div className="text-xs">
-            <div className="font-bold text-emerald-900">PROMO RADIUS DEKAT</div>
-            <div className="text-emerald-800">0 s/d 3 KM Bebas Biaya Transport</div>
+            <div className="font-bold text-emerald-200">NAVIGASI JALUR MOBIL REAL</div>
+            <div className="text-emerald-100 font-medium">Jarak Jalan Raya (Bukan Garis Lurus)</div>
           </div>
         </div>
       </div>
@@ -293,11 +293,8 @@ export const TransportCalculator: React.FC = () => {
                   <span className="text-xs font-bold uppercase text-stone-600">Total Ongkos Transport:</span>
                   <div className="text-right">
                     <span className="text-2xl font-extrabold text-emerald-400">
-                      {breakdown.totalTransport === 0 ? 'GRATIS' : formatRupiah(breakdown.totalTransport)}
+                      {formatRupiah(breakdown.totalTransport)}
                     </span>
-                    {breakdown.totalTransport === 0 && (
-                      <div className="text-[10px] text-emerald-700 font-medium">Bebas Biaya Transportasi</div>
-                    )}
                   </div>
                 </div>
               </div>

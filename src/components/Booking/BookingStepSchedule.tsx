@@ -129,7 +129,7 @@ export const BookingStepSchedule: React.FC<Props> = (props) => {
         <div className="flex justify-between items-center text-xs pt-2 border-t border-emerald-200/50">
           <span className="text-stone-600 font-medium">Biaya Transportasi:</span>
           <span className="text-base font-extrabold text-emerald-700">
-            {props.transportCost === 0 ? 'GRATIS (≤ 3 KM)' : formatRupiah(props.transportCost)}
+            {formatRupiah(props.transportCost)}
           </span>
         </div>
       </div>

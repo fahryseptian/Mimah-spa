@@ -21,13 +21,13 @@ export const SafetyBanner: React.FC = () => {
       <header className="relative z-10 text-center max-w-3xl mx-auto space-y-6">
         <div className="inline-flex items-center gap-2.5 px-4 py-1.5 bg-emerald-50 text-emerald-800 rounded-full text-[10px] font-bold uppercase tracking-[0.15em] border border-emerald-100/50">
           <ShieldCheck className="w-4 h-4 text-emerald-600" />
-          <span>Trust & Safety Protocol</span>
+          <span>Protokol Keamanan & Etika Medis</span>
         </div>
         <h2 className="text-3xl sm:text-5xl font-bold font-serif-display text-stone-900 leading-tight">
           Standar Operasional & Higienitas <br className="hidden sm:block" /> Kelas Dunia di Rumah Anda
         </h2>
         <p className="text-stone-500 font-medium leading-relaxed max-w-2xl mx-auto">
-          Mimah Spa berkomitmen penuh pada privasi dan sterilitas tingkat medis. Kami menghadirkan ketenangan tanpa kompromi untuk kenyamanan keluarga Anda.
+          Mimah Spa menjamin 100% privasi, rasa aman, dan sterilitas setara klinis medis. Kami menghadirkan kenyamanan penuh untuk Anda dan keluarga di Kota Medan.
         </p>
       </header>
 

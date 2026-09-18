@@ -361,11 +361,11 @@ export const INITIAL_VOUCHERS: Voucher[] = [
     expiry: '31 Des 2026',
   },
   {
-    code: 'GRATISONGKIR',
-    title: 'Bebas Biaya Transport Medan',
+    code: 'DISKONTRANSPORT',
+    title: 'Subsidi Potongan Ongkir Medan',
     discountAmount: 15000,
     minOrder: 150000,
-    description: 'Gratis ongkir s/d Rp 15.000 untuk jarak s/d 5 km',
+    description: 'Potongan biaya ongkir s/d Rp 15.000 untuk jarak pemesanan Medan',
     expiry: '30 Nov 2026',
   },
   {

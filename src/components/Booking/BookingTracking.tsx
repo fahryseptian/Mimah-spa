@@ -433,7 +433,7 @@ export const BookingTracking: React.FC = () => {
                 <div className="space-y-0.5">
                   <div className="text-[9px] font-black text-stone-400 uppercase tracking-widest">Jarak Tempuh ({currentBooking.estimatedDistanceKm} km)</div>
                   <div className="text-sm font-black text-emerald-800">
-                    {currentBooking.transportCost === 0 ? 'Bebas Ongkir (Promo)' : formatRupiah(currentBooking.transportCost)}
+                    {formatRupiah(currentBooking.transportCost)}
                   </div>
                 </div>
                 <motion.a

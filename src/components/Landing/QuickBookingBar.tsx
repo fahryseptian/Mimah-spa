@@ -42,8 +42,8 @@ export const QuickBookingBar: React.FC = () => {
             <Zap className="w-5 h-5 text-amber-500" />
           </div>
           <div className="flex flex-col text-left">
-            <p className="text-[10px] font-bold text-amber-600 uppercase tracking-widest leading-none mb-1.5">Benefit Instan</p>
-            <p className="text-sm font-bold text-stone-900 leading-none truncate">Free Transport 3KM</p>
+            <p className="text-[10px] font-bold text-amber-600 uppercase tracking-widest leading-none mb-1.5">Navigasi Presisi</p>
+            <p className="text-sm font-bold text-stone-900 leading-none truncate">Rute Jalan Raya Real</p>
           </div>
         </div>
 

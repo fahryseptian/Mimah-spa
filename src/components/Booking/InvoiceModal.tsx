@@ -41,7 +41,7 @@ Alamat: ${booking.address}, ${booking.kecamatan}, ${booking.city}
 *RINCIAN LAYANAN:*
 • ${booking.serviceTitle} (${booking.durationMinutes} mnt): ${formatRupiah(booking.servicePrice)}
 ${booking.selectedAddOns?.map(a => `• Add-on: ${a.name}: ${formatRupiah(a.price)}`).join('\n') || ''}
-• Ongkos Antar (${booking.estimatedDistanceKm} km): ${booking.transportCost === 0 ? 'GRATIS (Promo)' : formatRupiah(booking.transportCost)}
+• Ongkos Antar (${booking.estimatedDistanceKm} km): ${formatRupiah(booking.transportCost)}
 ${booking.discountAmount > 0 ? `• Diskon Voucher (${booking.voucherCode || 'PROMO'}): -${formatRupiah(booking.discountAmount)}` : ''}
 
 *TOTAL PEMBAYARAN:* *${formatRupiah(booking.totalAmount)}*
@@ -203,11 +203,7 @@ Terima kasih telah mempercayakan kebugaran Anda pada Mimah Spa! 🌿`;
                     <div className="text-[10px] text-stone-400">Jarak tempuh estimasi {booking.estimatedDistanceKm} km</div>
                   </div>
                   <div className="font-medium text-stone-900">
-                    {booking.transportCost === 0 ? (
-                      <span className="text-emerald-700 font-bold">GRATIS</span>
-                    ) : (
-                      formatRupiah(booking.transportCost)
-                    )}
+                    {formatRupiah(booking.transportCost)}
                   </div>
                 </div>
 
