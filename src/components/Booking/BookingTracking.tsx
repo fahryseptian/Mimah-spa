@@ -395,14 +395,10 @@ export const BookingTracking: React.FC = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 pt-4 border-t border-stone-50">
+              <div className="pt-4 border-t border-stone-50">
                 <div className="p-3 bg-stone-50 rounded-2xl space-y-1">
-                  <div className="text-[9px] font-black text-stone-400 uppercase tracking-widest">Minyak Esensial</div>
-                  <div className="text-[11px] font-bold text-stone-900">{currentBooking.selectedOil}</div>
-                </div>
-                <div className="p-3 bg-stone-50 rounded-2xl space-y-1">
-                  <div className="text-[9px] font-black text-stone-400 uppercase tracking-widest">Tekanan Pijat</div>
-                  <div className="text-[11px] font-bold text-stone-900 uppercase">{currentBooking.pressureLevel}</div>
+                  <div className="text-[9px] font-black text-stone-400 uppercase tracking-widest">Tekanan Pijat Perawatan</div>
+                  <div className="text-[11px] font-bold text-stone-900 uppercase">{currentBooking.pressureLevel || 'Sedang (Standard)'}</div>
                 </div>
               </div>
             </div>

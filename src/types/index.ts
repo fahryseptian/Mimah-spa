@@ -219,7 +219,7 @@ export interface BookingItem {
   therapistLng?: number;
   paymentUrl?: string;
   specialNotes?: string;
-  selectedOil: string;
+  selectedOil?: string;
   pressureLevel: 'ringan' | 'sedang' | 'kuat';
   focusAreas: string[];
   rating?: number;

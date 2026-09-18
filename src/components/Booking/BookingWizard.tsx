@@ -37,7 +37,6 @@ import {
 } from '../../types';
 import { 
   calculateTransportFare, 
-  getOilOptions, 
   getPressureOptions,
   generateWhatsAppBookingMessage,
   findNearestAvailableTherapist,
@@ -333,7 +332,6 @@ export const BookingWizard: React.FC = () => {
     setCompletedBooking(null);
   };
 
-  const oilOptions = getOilOptions();
   const pressureOptions = getPressureOptions();
   const focusAreaOptions = [
     'Punggung & Pundak',
@@ -430,9 +428,6 @@ export const BookingWizard: React.FC = () => {
                   setSelectedService={setSelectedService}
                   selectedDuration={selectedDuration}
                   setSelectedDuration={setSelectedDuration}
-                  selectedOil={selectedOil}
-                  setSelectedOil={setSelectedOil}
-                  oilOptions={oilOptions}
                 />
               )}
 

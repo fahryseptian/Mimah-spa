@@ -176,7 +176,7 @@ Terima kasih telah mempercayakan kebugaran Anda pada Mimah Spa! 🌿`;
                   <div>
                     <div className="font-bold text-stone-900">{booking.serviceTitle}</div>
                     <div className="text-[10px] text-stone-400">
-                      Durasi {booking.durationMinutes} Menit • {booking.selectedOil || 'Minyak Lavender'} • {booking.pressureLevel}
+                      Durasi {booking.durationMinutes} Menit • Tekanan {booking.pressureLevel}
                     </div>
                   </div>
                   <div className="font-bold text-stone-900">{formatRupiah(booking.servicePrice)}</div>

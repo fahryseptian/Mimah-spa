@@ -9,9 +9,6 @@ interface Props {
   setSelectedService: (s: ServiceItem) => void;
   selectedDuration: number;
   setSelectedDuration: (d: number) => void;
-  selectedOil: string;
-  setSelectedOil: (o: string) => void;
-  oilOptions: { id: string; name: string; desc: string }[];
 }
 
 export const BookingStepService: React.FC<Props> = ({
@@ -20,9 +17,6 @@ export const BookingStepService: React.FC<Props> = ({
   setSelectedService,
   selectedDuration,
   setSelectedDuration,
-  selectedOil,
-  setSelectedOil,
-  oilOptions,
 }) => {
   return (
     <div className="space-y-6">
@@ -90,32 +84,6 @@ export const BookingStepService: React.FC<Props> = ({
                   PALING DIMINATI
                 </span>
               )}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Oil Selection */}
-      <div className="space-y-2 pt-2 border-t border-stone-100">
-        <label className="text-xs font-bold text-stone-700 uppercase tracking-wider">
-          Pilihan Minyak Terapi (Gratis):
-        </label>
-        <div className="space-y-1.5">
-          {oilOptions.map((oil) => (
-            <button
-              key={oil.id}
-              onClick={() => setSelectedOil(oil.name)}
-              className={`w-full p-2.5 rounded-xl border text-left flex items-center justify-between transition-all ${
-                selectedOil === oil.name
-                  ? 'border-emerald-600 bg-emerald-50 font-medium'
-                  : 'border-stone-100 hover:bg-stone-50'
-              }`}
-            >
-              <div>
-                <div className="text-xs font-bold text-stone-900">{oil.name}</div>
-                <div className="text-[11px] text-stone-500">{oil.desc}</div>
-              </div>
-              {selectedOil === oil.name && <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />}
             </button>
           ))}
         </div>

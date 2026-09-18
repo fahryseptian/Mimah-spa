@@ -142,7 +142,6 @@ export const generateWhatsAppBookingMessage = (booking: BookingItem): string => 
 ✨ *Add-on*: 
    ${addOnsText}
 ${therapistPref}
-🌿 *Pilihan Minyak*: ${booking.selectedOil || 'Standard'}
 💪 *Kekuatan Tekanan*: ${(booking.pressureLevel || 'sedang').toUpperCase()}
 
 👤 *DATA PELANGGAN*
