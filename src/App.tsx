@@ -15,7 +15,10 @@ import {
   CreditCard,
   Send,
   Building,
-  BellRing
+  BellRing,
+  Instagram,
+  Mail,
+  MessageCircle
 } from 'lucide-react';
 import { AppProvider, useApp } from './context/AppContext';
 import { supabase } from './lib/supabase';
@@ -392,51 +395,114 @@ VITE_SUPABASE_ANON_KEY=Masukkan_Anon_Key_Supabase_Anda`}
 
       {/* Footer - Only for Customer */}
       {userRole === 'customer' && (
-        <footer className="mt-24 bg-white border-t border-stone-100">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        <footer className="mt-24 bg-white border-t border-stone-200/60">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-12">
             
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-12 lg:gap-16">
+            {/* Top Footer Callout Card */}
+            <div className="mb-16 p-8 sm:p-10 rounded-[2.5rem] bg-gradient-to-r from-stone-900 via-stone-850 to-emerald-950 text-white flex flex-col lg:flex-row items-center justify-between gap-8 shadow-2xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+              <div className="space-y-2 text-center lg:text-left relative z-10">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-extrabold uppercase tracking-widest border border-emerald-500/30">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Solusi Relaksasi Keluarga</span>
+                </div>
+                <h3 className="text-2xl sm:text-3xl font-bold font-serif-display text-white">
+                  Siap Merasakan Sensasi Spa Bintang Lima di Rumah?
+                </h3>
+                <p className="text-xs sm:text-sm text-stone-300 max-w-xl font-medium">
+                  Terapis wanita bersertifikat BNSP kami siap hadir membawa koper higienis steril ke lokasi Anda di Kota Medan.
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-3 relative z-10">
+                <button
+                  onClick={() => setIsBookingModalOpen(true)}
+                  className="px-7 py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-lg shadow-emerald-600/30 transition-all active:scale-95 flex items-center gap-2 cursor-pointer"
+                >
+                  <span>Pesan Sekarang</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+                <a
+                  href="https://wa.me/6285361991731?text=Halo%20Admin%20Mimah%20Spa,%20saya%20ingin%20tanya%20layanan%20home%20service"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-6 py-3.5 rounded-2xl bg-white/10 hover:bg-white/20 text-white border border-white/20 font-bold text-xs transition-all flex items-center gap-2"
+                >
+                  <MessageCircle className="w-4 h-4 text-emerald-400" />
+                  <span>Chat WhatsApp</span>
+                </a>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-10 lg:gap-14">
               
               {/* Col 1: Brand & Disclaimer */}
-              <div className="md:col-span-5 space-y-8">
+              <div className="md:col-span-4 space-y-6">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-emerald-700 text-white flex items-center justify-center font-bold font-serif-display text-xl">
+                  <div className="w-10 h-10 rounded-2xl bg-emerald-800 text-white flex items-center justify-center font-bold font-serif-display text-xl shadow-md">
                     M
                   </div>
                   <div>
                     <span className="text-xl font-bold text-stone-900 font-serif-display tracking-tight block">
                       Mimah Spa
                     </span>
-                    <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest block">
-                      Premium Home Service
+                    <span className="text-[10px] font-extrabold text-emerald-700 uppercase tracking-widest block">
+                      Premium Home Service Medan
                     </span>
                   </div>
                 </div>
                 
-                <p className="text-sm text-stone-500 leading-relaxed font-medium">
-                  Platform reservasi terapis kebugaran & kesehatan profesional bersertifikat BNSP. Kami menghadirkan standar spa bintang lima langsung ke rumah Anda khusus untuk wanita & keluarga.
+                <p className="text-xs sm:text-sm text-stone-600 leading-relaxed font-medium">
+                  Platform reservasi terapis kebugaran & kesehatan wanita terverifikasi BNSP resmi No. 1 di Kota Medan. Bebas macet, steril higienis, dan nyaman untuk keluarga.
                 </p>
 
-                <div className="p-5 rounded-2xl bg-emerald-50/50 border border-emerald-100/50">
-                  <p className="text-[11px] text-emerald-800 leading-relaxed font-semibold italic">
-                    ⚠️ "Mimah Spa secara ketat hanya menyediakan layanan terapi kebugaran profesional. Segala bentuk pelanggaran etika & norma kesopanan akan kami proses secara hukum."
+                <div className="p-4 rounded-2xl bg-emerald-50/60 border border-emerald-100/80">
+                  <p className="text-[11px] text-emerald-900 leading-relaxed font-semibold italic">
+                    ⚠️ "Mimah Spa secara ketat hanya melayani terapi kesehatan profesional. Segala bentuk tindakan melanggar norma hukum & kesopanan akan kami tindak tegas."
                   </p>
                 </div>
 
-                <div className="flex items-center gap-4">
-                  {[1, 2, 3, 4].map((i) => (
-                    <div key={i} className="w-8 h-8 rounded-xl bg-stone-50 border border-stone-100 flex items-center justify-center text-stone-400 hover:text-emerald-600 hover:bg-emerald-50 transition-all cursor-pointer">
-                      <Sparkles className="w-4 h-4" />
-                    </div>
-                  ))}
+                <div className="flex items-center gap-2 pt-1">
+                  <a
+                    href="https://wa.me/6285361991731"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-9 h-9 rounded-xl bg-stone-50 border border-stone-200/80 flex items-center justify-center text-stone-500 hover:text-emerald-700 hover:bg-emerald-50 hover:border-emerald-200 transition-all"
+                    title="WhatsApp"
+                  >
+                    <MessageCircle className="w-4 h-4" />
+                  </a>
+                  <a
+                    href="https://instagram.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-9 h-9 rounded-xl bg-stone-50 border border-stone-200/80 flex items-center justify-center text-stone-500 hover:text-emerald-700 hover:bg-emerald-50 hover:border-emerald-200 transition-all"
+                    title="Instagram"
+                  >
+                    <Instagram className="w-4 h-4" />
+                  </a>
+                  <a
+                    href="mailto:info@mimahspa.com"
+                    className="w-9 h-9 rounded-xl bg-stone-50 border border-stone-200/80 flex items-center justify-center text-stone-500 hover:text-emerald-700 hover:bg-emerald-50 hover:border-emerald-200 transition-all"
+                    title="Email"
+                  >
+                    <Mail className="w-4 h-4" />
+                  </a>
                 </div>
               </div>
 
               {/* Col 2: Services */}
-              <div className="md:col-span-3 space-y-6">
-                <h4 className="text-[10px] font-black text-stone-400 uppercase tracking-[0.2em]">Layanan Utama</h4>
-                <ul className="space-y-4">
-                  {['Pijat Tradisional', 'Refleksi Kaki', 'Deep Tissue Sport', 'Ibu Hamil & Bayi', 'Fisioterapi'].map((item) => (
+              <div className="md:col-span-3 space-y-4">
+                <h4 className="text-[10px] font-black text-stone-400 uppercase tracking-[0.2em]">Katalog Perawatan</h4>
+                <ul className="space-y-3">
+                  {[
+                    'Pijat Tradisional Sehat',
+                    'Refleksi Kaki & Tangan',
+                    'Deep Tissue & Sport Massage',
+                    'Pijat Ibu Hamil & Bayi',
+                    'Bekam Medis & Kerokan',
+                    'Totok Wajah & Lulur Spa',
+                    'Fisioterapi Kesehatan'
+                  ].map((item) => (
                     <li key={item}>
                       <button 
                         onClick={() => {
@@ -447,7 +513,7 @@ VITE_SUPABASE_ANON_KEY=Masukkan_Anon_Key_Supabase_Anda`}
                             setActiveCustomerTab('katalog');
                           }
                         }}
-                        className="text-sm font-bold text-stone-600 hover:text-emerald-700 transition-colors cursor-pointer text-left"
+                        className="text-xs font-bold text-stone-600 hover:text-emerald-700 transition-colors cursor-pointer text-left"
                       >
                         {item}
                       </button>
@@ -456,37 +522,60 @@ VITE_SUPABASE_ANON_KEY=Masukkan_Anon_Key_Supabase_Anda`}
                 </ul>
               </div>
 
-              {/* Col 3: Support */}
-              <div className="md:col-span-4 space-y-8">
-                <div className="space-y-6">
-                  <h4 className="text-[10px] font-black text-stone-400 uppercase tracking-[0.2em]">Hubungi Kami</h4>
-                  <div className="space-y-4">
-                    <div className="flex items-start gap-4">
-                      <div className="w-10 h-10 rounded-xl bg-stone-50 flex items-center justify-center shrink-0 border border-stone-100">
-                        <Phone className="w-5 h-5 text-emerald-600" />
+              {/* Col 3: Coverage Area */}
+              <div className="md:col-span-2 space-y-4">
+                <h4 className="text-[10px] font-black text-stone-400 uppercase tracking-[0.2em]">Cakupan Medan</h4>
+                <ul className="space-y-2 text-xs font-semibold text-stone-500">
+                  <li>Medan Kota</li>
+                  <li>Medan Baru</li>
+                  <li>Medan Selayang</li>
+                  <li>Medan Sunggal</li>
+                  <li>Medan Johor</li>
+                  <li>Medan Barat</li>
+                  <li>Medan Helvetia</li>
+                  <li>Medan Petisah</li>
+                </ul>
+              </div>
+
+              {/* Col 4: Support & Payment */}
+              <div className="md:col-span-3 space-y-6">
+                <div className="space-y-4">
+                  <h4 className="text-[10px] font-black text-stone-400 uppercase tracking-[0.2em]">Layanan Pelanggan</h4>
+                  <div className="space-y-3">
+                    <a 
+                      href="https://wa.me/6285361991731"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-start gap-3 p-3 rounded-2xl bg-stone-50 hover:bg-emerald-50/50 border border-stone-100 hover:border-emerald-200 transition-all group"
+                    >
+                      <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center shrink-0 border border-stone-100 shadow-xs group-hover:bg-emerald-700 group-hover:text-white transition-colors">
+                        <Phone className="w-4 h-4 text-emerald-600 group-hover:text-white" />
                       </div>
                       <div>
-                        <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">WhatsApp Hotline</p>
-                        <p className="text-sm font-bold text-stone-900">+62 853-6199-1731</p>
+                        <p className="text-[9px] font-bold text-stone-400 uppercase tracking-widest">Hotline CS WhatsApp</p>
+                        <p className="text-xs font-extrabold text-stone-900 group-hover:text-emerald-800">+62 853-6199-1731</p>
                       </div>
-                    </div>
-                    <div className="flex items-start gap-4">
-                      <div className="w-10 h-10 rounded-xl bg-stone-50 flex items-center justify-center shrink-0 border border-stone-100">
-                        <Clock className="w-5 h-5 text-emerald-600" />
+                    </a>
+                    
+                    <div className="flex items-start gap-3 p-3 rounded-2xl bg-stone-50 border border-stone-100">
+                      <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center shrink-0 border border-stone-100 shadow-xs">
+                        <Clock className="w-4 h-4 text-emerald-600" />
                       </div>
                       <div>
-                        <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">Jam Operasional</p>
-                        <p className="text-sm font-bold text-stone-900">09.00 - 20.00 WIB (Setiap Hari)</p>
+                        <p className="text-[9px] font-bold text-stone-400 uppercase tracking-widest">Jam Operasional</p>
+                        <p className="text-xs font-extrabold text-stone-900">09.00 - 20.00 WIB (Setiap Hari)</p>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="space-y-4">
-                  <h4 className="text-[10px] font-black text-stone-400 uppercase tracking-[0.2em]">Metode Pembayaran</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {['BCA', 'Mandiri', 'GoPay', 'OVO', 'ShopeePay', 'QRIS'].map((bank) => (
-                      <span key={bank} className="px-3 py-1 rounded-lg bg-stone-50 border border-stone-100 text-[10px] font-bold text-stone-500">{bank}</span>
+                <div className="space-y-3">
+                  <h4 className="text-[10px] font-black text-stone-400 uppercase tracking-[0.2em]">Pembayaran Resmi</h4>
+                  <div className="flex flex-wrap gap-1.5">
+                    {['QRIS', 'BCA', 'Mandiri', 'BRI', 'BNI', 'GoPay', 'OVO', 'ShopeePay'].map((bank) => (
+                      <span key={bank} className="px-2.5 py-1 rounded-lg bg-stone-50 border border-stone-200/60 text-[10px] font-bold text-stone-600">
+                        {bank}
+                      </span>
                     ))}
                   </div>
                 </div>
@@ -494,25 +583,25 @@ VITE_SUPABASE_ANON_KEY=Masukkan_Anon_Key_Supabase_Anda`}
 
             </div>
 
-            <div className="mt-20 pt-8 border-t border-stone-50 flex flex-col sm:flex-row items-center justify-between gap-6 text-[11px] font-bold text-stone-400">
+            <div className="mt-16 pt-8 border-t border-stone-100 flex flex-col sm:flex-row items-center justify-between gap-6 text-[11px] font-bold text-stone-400">
               <div className="flex flex-wrap items-center gap-3 sm:gap-4">
                 <span>© {new Date().getFullYear()} Mimah Spa Indonesia</span>
-                <div className="w-1 h-1 rounded-full bg-stone-200 hidden sm:block" />
+                <div className="w-1 h-1 rounded-full bg-stone-300 hidden sm:block" />
                 <button onClick={() => { setTermsTab('terms'); setIsTermsOpen(true); }} className="hover:text-emerald-700 transition-colors uppercase tracking-widest">Syarat & Ketentuan</button>
-                <div className="w-1 h-1 rounded-full bg-stone-200" />
+                <div className="w-1 h-1 rounded-full bg-stone-300" />
                 <button onClick={() => { setTermsTab('refund'); setIsTermsOpen(true); }} className="hover:text-emerald-700 transition-colors uppercase tracking-widest text-emerald-700 font-black">Kebijakan Refund</button>
-                <div className="w-1 h-1 rounded-full bg-stone-200" />
+                <div className="w-1 h-1 rounded-full bg-stone-300" />
                 <button onClick={() => { setTermsTab('privacy'); setIsTermsOpen(true); }} className="hover:text-emerald-700 transition-colors uppercase tracking-widest">Privasi PDP</button>
-                <div className="w-1 h-1 rounded-full bg-stone-200" />
-                <button onClick={() => { setTermsTab('careers'); setIsTermsOpen(true); }} className="hover:text-emerald-700 transition-colors uppercase tracking-widest text-emerald-600 font-extrabold">Karir & Kemitraan</button>
+                <div className="w-1 h-1 rounded-full bg-stone-300" />
+                <button onClick={() => { setTermsTab('careers'); setIsTermsOpen(true); }} className="hover:text-emerald-700 transition-colors uppercase tracking-widest text-emerald-700 font-extrabold">Karir & Kemitraan</button>
               </div>
               <div className="flex items-center gap-6">
-                <div className="flex items-center gap-1.5 text-emerald-600/60">
+                <div className="flex items-center gap-1.5 text-emerald-700 font-bold">
                   <ShieldCheck className="w-3.5 h-3.5" />
                   <span>BNSP Certified</span>
                 </div>
-                <div className="flex items-center gap-1.5 text-emerald-600/60">
-                  <Sparkles className="w-3.5 h-3.5" />
+                <div className="flex items-center gap-1.5 text-emerald-700 font-bold">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
                   <span>Standard Kemenkes</span>
                 </div>
               </div>
