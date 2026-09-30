@@ -522,18 +522,42 @@ VITE_SUPABASE_ANON_KEY=Masukkan_Anon_Key_Supabase_Anda`}
                 </ul>
               </div>
 
-              {/* Col 3: Coverage Area */}
+              {/* Col 3: Legal & Kemitraan */}
               <div className="md:col-span-2 space-y-4">
-                <h4 className="text-[10px] font-black text-stone-400 uppercase tracking-[0.2em]">Cakupan Medan</h4>
-                <ul className="space-y-2 text-xs font-semibold text-stone-500">
-                  <li>Medan Kota</li>
-                  <li>Medan Baru</li>
-                  <li>Medan Selayang</li>
-                  <li>Medan Sunggal</li>
-                  <li>Medan Johor</li>
-                  <li>Medan Barat</li>
-                  <li>Medan Helvetia</li>
-                  <li>Medan Petisah</li>
+                <h4 className="text-[10px] font-black text-stone-400 uppercase tracking-[0.2em]">Legalitas & Karir</h4>
+                <ul className="space-y-3">
+                  <li>
+                    <button 
+                      onClick={() => { setTermsTab('terms'); setIsTermsOpen(true); }}
+                      className="text-xs font-bold text-stone-600 hover:text-emerald-700 transition-colors cursor-pointer text-left"
+                    >
+                      Syarat & Ketentuan
+                    </button>
+                  </li>
+                  <li>
+                    <button 
+                      onClick={() => { setTermsTab('refund'); setIsTermsOpen(true); }}
+                      className="text-xs font-bold text-stone-600 hover:text-emerald-700 transition-colors cursor-pointer text-left"
+                    >
+                      Kebijakan Refund
+                    </button>
+                  </li>
+                  <li>
+                    <button 
+                      onClick={() => { setTermsTab('privacy'); setIsTermsOpen(true); }}
+                      className="text-xs font-bold text-stone-600 hover:text-emerald-700 transition-colors cursor-pointer text-left"
+                    >
+                      Privasi PDP
+                    </button>
+                  </li>
+                  <li>
+                    <button 
+                      onClick={() => { setTermsTab('careers'); setIsTermsOpen(true); }}
+                      className="text-xs font-bold text-stone-600 hover:text-emerald-700 transition-colors cursor-pointer text-left"
+                    >
+                      Karir & Kemitraan
+                    </button>
+                  </li>
                 </ul>
               </div>
 
@@ -585,15 +609,9 @@ VITE_SUPABASE_ANON_KEY=Masukkan_Anon_Key_Supabase_Anda`}
 
             <div className="mt-16 pt-8 border-t border-stone-100 flex flex-col sm:flex-row items-center justify-between gap-6 text-[11px] font-bold text-stone-400">
               <div className="flex flex-wrap items-center gap-3 sm:gap-4">
-                <span>© {new Date().getFullYear()} Mimah Spa Indonesia</span>
+                <span>© {new Date().getFullYear()} Mimah Spa Indonesia • Layanan Spa Panggilan Keluarga Medan</span>
                 <div className="w-1 h-1 rounded-full bg-stone-300 hidden sm:block" />
-                <button onClick={() => { setTermsTab('terms'); setIsTermsOpen(true); }} className="hover:text-emerald-700 transition-colors uppercase tracking-widest">Syarat & Ketentuan</button>
-                <div className="w-1 h-1 rounded-full bg-stone-300" />
-                <button onClick={() => { setTermsTab('refund'); setIsTermsOpen(true); }} className="hover:text-emerald-700 transition-colors uppercase tracking-widest text-emerald-700 font-black">Kebijakan Refund</button>
-                <div className="w-1 h-1 rounded-full bg-stone-300" />
-                <button onClick={() => { setTermsTab('privacy'); setIsTermsOpen(true); }} className="hover:text-emerald-700 transition-colors uppercase tracking-widest">Privasi PDP</button>
-                <div className="w-1 h-1 rounded-full bg-stone-300" />
-                <button onClick={() => { setTermsTab('careers'); setIsTermsOpen(true); }} className="hover:text-emerald-700 transition-colors uppercase tracking-widest text-emerald-700 font-extrabold">Karir & Kemitraan</button>
+                <button onClick={() => { setActiveCustomerTab('login'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="hover:text-emerald-700 transition-colors uppercase tracking-widest text-stone-500 font-bold">Portal Staf</button>
               </div>
               <div className="flex items-center gap-6">
                 <div className="flex items-center gap-1.5 text-emerald-700 font-bold">

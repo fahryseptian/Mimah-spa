@@ -319,6 +319,18 @@ export const Navbar: React.FC = () => {
                 </button>
 
                 <button
+                  onClick={() => {
+                    setActiveCustomerTab('login');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="px-4 py-2.5 bg-stone-50 hover:bg-stone-100 border border-stone-200 text-stone-600 rounded-[1.25rem] text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs hover:text-stone-900"
+                  title="Masuk Portal Mitra Terapis & Admin"
+                >
+                  <Settings className="w-3.5 h-3.5 text-stone-500" />
+                  <span>Portal Staf</span>
+                </button>
+
+                <button
                   onClick={() => setIsBookingModalOpen(true)}
                   className="px-8 py-3.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-[1.25rem] text-sm font-bold shadow-lg shadow-emerald-700/20 transition-all hover:-translate-y-0.5 active:scale-95 flex items-center gap-2.5"
                 >

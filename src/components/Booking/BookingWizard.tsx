@@ -91,7 +91,6 @@ export const BookingWizard: React.FC = () => {
   const [selectedDuration, setSelectedDuration] = useState<number>(() => {
     return selectedService?.durationOptions?.[0]?.durationMinutes || 90;
   });
-  const [selectedOil, setSelectedOil] = useState<string>('Minyak Zaitun + Aroma Lavender');
 
   // Step 2: Add-ons
   const [selectedAddOnIds, setSelectedAddOnIds] = useState<string[]>([]);
@@ -124,7 +123,7 @@ export const BookingWizard: React.FC = () => {
   const [voucherCodeInput, setVoucherCodeInput] = useState<string>('');
   const [appliedVoucherCode, setAppliedVoucherCode] = useState<string>('');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('qris');
-  const [hasAgreedToTerms, setHasAgreedToTerms] = useState<boolean>(false);
+  const [hasAgreedToTerms, setHasAgreedToTerms] = useState<boolean>(true);
   const [isTermsOpen, setIsTermsOpen] = useState<boolean>(false);
 
   // Completed Booking State
@@ -297,7 +296,6 @@ export const BookingWizard: React.FC = () => {
       paymentStatus: finalPaymentStatus,
       paymentUrl: paymentUrl || undefined,
       specialNotes,
-      selectedOil,
     };
 
     const created = createBooking(bookingPayload);
@@ -323,7 +321,7 @@ export const BookingWizard: React.FC = () => {
     customDate, timeSlot, clientCity, clientKecamatan, addressNotes, 
     placeType, distanceKm, transportCost, transportBreakdown, 
     appliedVoucherCode, voucherDiscount, grandTotal, paymentMethod, 
-    specialNotes, selectedOil, createBooking
+    specialNotes, createBooking
   ]);
 
   const handleClose = () => {

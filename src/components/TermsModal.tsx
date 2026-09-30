@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, ShieldCheck, Info, Scale, AlertTriangle, CheckCircle2, RefreshCw, Lock, Clock, CreditCard, PhoneCall, Sparkles, UserPlus, Mail } from 'lucide-react';
 import { TherapistRegistrationModal } from './Therapists/TherapistRegistrationModal';
 
@@ -11,6 +11,12 @@ interface TermsModalProps {
 export const TermsModal: React.FC<TermsModalProps> = ({ isOpen, onClose, defaultTab = 'terms' }) => {
   const [activeTab, setActiveTab] = useState<'terms' | 'refund' | 'privacy' | 'careers'>(defaultTab);
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (defaultTab) {
+      setActiveTab(defaultTab);
+    }
+  }, [defaultTab, isOpen]);
 
   if (!isOpen) return null;
 

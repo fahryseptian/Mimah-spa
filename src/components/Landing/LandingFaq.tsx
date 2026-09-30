@@ -7,7 +7,7 @@ export const LandingFaq: React.FC = () => {
   const faqs = [
     {
       q: 'Apakah saya perlu menyediakan matras, kain, atau minyak sendiri?',
-      a: 'Tidak perlu. Mitra terapis Mimah Spa datang membawa koper lengkap berisi matras busa medis lipat portabel, sprei dan sarung bantal higienis sekali pakai (disposable), kain penutup bersih bersegel, serta pilihan minyak aromaterapi (Zaitun, Lavender, Eucalyptus, atau Rempah Hangat).'
+      a: 'Tidak perlu. Mitra terapis Mimah Spa datang membawa koper lengkap berisi matras busa medis lipat portabel, sprei dan sarung bantal higienis sekali pakai (disposable), kain penutup bersih bersegel, serta minyak aromaterapi alami berkualitas premium yang aman dan menenangkan.'
     },
     {
       q: 'Apakah bisa memilih khusus terapis wanita untuk klien wanita?',
