@@ -239,9 +239,77 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   }, []);
 
+  // Deleted items trackers for local & remote persistence
+  const [deletedTherapistIds, setDeletedTherapistIds] = useState<string[]>(() => {
+    const saved = localStorage.getItem('mimah_deleted_therapist_ids_v1');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const [deletedServiceIds, setDeletedServiceIds] = useState<string[]>(() => {
+    const saved = localStorage.getItem('mimah_deleted_service_ids_v1');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const [deletedInventoryIds, setDeletedInventoryIds] = useState<string[]>(() => {
+    const saved = localStorage.getItem('mimah_deleted_inventory_ids_v1');
+    return saved ? JSON.parse(saved) : [];
+  });
+
   // Persisted or default states with migration for Medan
-  const [therapists, setTherapists] = useState<Therapist[]>(INITIAL_THERAPISTS);
-  const [services, setServices] = useState<ServiceItem[]>(INITIAL_SERVICES);
+  const [therapists, setTherapists] = useState<Therapist[]>(() => {
+    const saved = localStorage.getItem('mimah_therapists_v3');
+    const deleted: string[] = JSON.parse(localStorage.getItem('mimah_deleted_therapist_ids_v1') || '[]');
+    if (saved) {
+      try {
+        const parsed: Therapist[] = JSON.parse(saved);
+        return parsed.filter(t => !deleted.includes(t.id));
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    return INITIAL_THERAPISTS.filter(t => !deleted.includes(t.id));
+  });
+
+  const [services, setServices] = useState<ServiceItem[]>(() => {
+    const saved = localStorage.getItem('mimah_services_v3');
+    const deleted: string[] = JSON.parse(localStorage.getItem('mimah_deleted_service_ids_v1') || '[]');
+    if (saved) {
+      try {
+        const parsed: ServiceItem[] = JSON.parse(saved);
+        return parsed.filter(s => !deleted.includes(s.id));
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    return INITIAL_SERVICES.filter(s => !deleted.includes(s.id));
+  });
+
+  const [inventory, setInventory] = useState<InventoryItem[]>(() => {
+    const saved = localStorage.getItem('mimah_inventory_v3');
+    const deleted: string[] = JSON.parse(localStorage.getItem('mimah_deleted_inventory_ids_v1') || '[]');
+    if (saved) {
+      try {
+        const parsed: InventoryItem[] = JSON.parse(saved);
+        return parsed.filter(i => !deleted.includes(i.id));
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    return INITIAL_INVENTORY_ITEMS.filter(i => !deleted.includes(i.id));
+  });
+
+  useEffect(() => {
+    localStorage.setItem('mimah_therapists_v3', JSON.stringify(therapists));
+  }, [therapists]);
+
+  useEffect(() => {
+    localStorage.setItem('mimah_services_v3', JSON.stringify(services));
+  }, [services]);
+
+  useEffect(() => {
+    localStorage.setItem('mimah_inventory_v3', JSON.stringify(inventory));
+  }, [inventory]);
+
   const [addOns] = useState<ServiceAddOn[]>(INITIAL_ADDONS);
   const [cities] = useState<LocationZone[]>(INITIAL_CITIES);
   const [vouchers, setVouchers] = useState<Voucher[]>(() => {
@@ -334,35 +402,41 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
         // Process Therapists
         if (therapistsRes.status === 'fulfilled' && therapistsRes.value.data && therapistsRes.value.data.length > 0) {
-          const mappedTherapists = therapistsRes.value.data.map((t: any) => ({
-            id: t.id,
-            name: t.name,
-            phone: t.phone || '',
-            photoUrl: t.photo_url || t.photo || t.photoUrl || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=400',
-            gender: t.gender || 'female',
-            rating: Number(t.rating) || 5.0,
-            reviewCount: t.review_count || t.reviewCount || 0,
-            status: t.status || (t.is_available !== false ? 'online' : 'offline'),
-            isAvailable: t.is_available ?? t.isAvailable ?? true,
-            baseCity: t.city || t.baseCity || 'Medan',
-            specialties: Array.isArray(t.specialties) ? t.specialties : (Array.isArray(t.skills) ? t.skills : []),
-            certifications: Array.isArray(t.certifications) ? t.certifications : [],
-            bio: t.bio || '',
-            joinedDate: t.joined_date || t.joinedDate || '2023-01-01',
-            commissionRate: t.commission_rate || t.commissionRate || 0.7,
-            isTopTherapist: t.is_top_therapist ?? t.isTopTherapist ?? false,
-            completedOrders: t.completed_sessions || t.completedOrders || 0,
-            totalHours: t.totalHours || 0,
-            dailyEarnings: t.dailyEarnings || 0,
-            monthlyEarnings: t.monthlyEarnings || 0,
-            assignedInventory: t.assignedInventory || []
-          }));
+          const currentDeleted = JSON.parse(localStorage.getItem('mimah_deleted_therapist_ids_v1') || '[]');
+          const mappedTherapists = therapistsRes.value.data
+            .filter((t: any) => !currentDeleted.includes(t.id))
+            .map((t: any) => ({
+              id: t.id,
+              name: t.name,
+              phone: t.phone || '',
+              photoUrl: t.photo_url || t.photo || t.photoUrl || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=400',
+              gender: t.gender || 'female',
+              rating: Number(t.rating) || 5.0,
+              reviewCount: t.review_count || t.reviewCount || 0,
+              status: t.status || (t.is_available !== false ? 'online' : 'offline'),
+              isAvailable: t.is_available ?? t.isAvailable ?? true,
+              baseCity: t.city || t.baseCity || 'Medan',
+              specialties: Array.isArray(t.specialties) ? t.specialties : (Array.isArray(t.skills) ? t.skills : []),
+              certifications: Array.isArray(t.certifications) ? t.certifications : [],
+              bio: t.bio || '',
+              joinedDate: t.joined_date || t.joinedDate || '2023-01-01',
+              commissionRate: t.commission_rate || t.commissionRate || 0.7,
+              isTopTherapist: t.is_top_therapist ?? t.isTopTherapist ?? false,
+              completedOrders: t.completed_sessions || t.completedOrders || 0,
+              totalHours: t.totalHours || 0,
+              dailyEarnings: t.dailyEarnings || 0,
+              monthlyEarnings: t.monthlyEarnings || 0,
+              assignedInventory: t.assignedInventory || []
+            }));
           setTherapists(mappedTherapists);
         }
 
         // Process Services
         if (servicesRes.status === 'fulfilled' && servicesRes.value.data && servicesRes.value.data.length > 0) {
-          const mappedServices = servicesRes.value.data.map((s: any) => {
+          const currentDeletedServices = JSON.parse(localStorage.getItem('mimah_deleted_service_ids_v1') || '[]');
+          const mappedServices = servicesRes.value.data
+            .filter((s: any) => !currentDeletedServices.includes(s.id))
+            .map((s: any) => {
             let durationOpts = s.durationOptions || s.duration_options || [];
             if (typeof durationOpts === 'string') {
               try { durationOpts = JSON.parse(durationOpts); } catch (e) { durationOpts = []; }
@@ -707,7 +781,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [viewingTherapist, setViewingTherapist] = useState<Therapist | null>(null);
   const [currentTherapistId, setCurrentTherapistId] = useState<string>('terapis-1');
   const [notificationToast, setNotificationToast] = useState<{ message: string; type: 'success' | 'info' | 'warning' } | null>(null);
-  const [inventory, setInventory] = useState<InventoryItem[]>(INITIAL_INVENTORY_ITEMS);
 
   const addInventoryItem = (item: InventoryItem) => {
     setInventory(prev => [...prev, item]);
@@ -742,10 +815,21 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const deleteInventoryItem = (id: string) => {
-    setInventory(prev => prev.filter(item => item.id !== id));
+    setDeletedInventoryIds(prev => {
+      const updated = Array.from(new Set([...prev, id]));
+      localStorage.setItem('mimah_deleted_inventory_ids_v1', JSON.stringify(updated));
+      return updated;
+    });
+
+    setInventory(prev => {
+      const filtered = prev.filter(item => item.id !== id);
+      localStorage.setItem('mimah_inventory_v3', JSON.stringify(filtered));
+      return filtered;
+    });
+
     if (supabase) {
       supabase.from('master_inventory').delete().eq('id', id).then(({ error }) => {
-        if (error) console.error('Supabase delete inventory error:', error.message);
+        if (error) console.warn('Supabase delete inventory notice:', error.message);
       });
     }
     showToast('Barang berhasil dihapus dari inventaris.', 'info');
@@ -1088,11 +1172,22 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const deleteService = (id: string) => {
-    setServices(prev => prev.filter(s => s.id !== id));
+    setDeletedServiceIds(prev => {
+      const updated = Array.from(new Set([...prev, id]));
+      localStorage.setItem('mimah_deleted_service_ids_v1', JSON.stringify(updated));
+      return updated;
+    });
+
+    setServices(prev => {
+      const filtered = prev.filter(s => s.id !== id);
+      localStorage.setItem('mimah_services_v3', JSON.stringify(filtered));
+      return filtered;
+    });
+
     showToast('Layanan berhasil dihapus.', 'info');
     if (supabase) {
       supabase.from('services').delete().eq('id', id).then(({ error }) => {
-        if (error) console.error('Supabase service delete error:', error.message);
+        if (error) console.warn('Supabase service delete notice:', error.message);
       });
     }
   };
@@ -1442,13 +1537,24 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const deleteTherapist = (id: string) => {
-    setTherapists(prev => prev.filter(t => t.id !== id));
+    setDeletedTherapistIds(prev => {
+      const updated = Array.from(new Set([...prev, id]));
+      localStorage.setItem('mimah_deleted_therapist_ids_v1', JSON.stringify(updated));
+      return updated;
+    });
+
+    setTherapists(prev => {
+      const filtered = prev.filter(t => t.id !== id);
+      localStorage.setItem('mimah_therapists_v3', JSON.stringify(filtered));
+      return filtered;
+    });
+
     showToast('Terapis berhasil dihapus dari sistem.', 'info');
 
     // Background Supabase Sync
     if (supabase) {
       supabase.from('therapists').delete().eq('id', id).then(({ error }) => {
-        if (error) console.error('Supabase therapist delete error:', error.message);
+        if (error) console.warn('Supabase therapist delete notice:', error.message);
         else console.log('Therapist successfully deleted from Supabase');
       });
     }
