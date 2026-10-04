@@ -442,7 +442,6 @@ export const AdminManagement: React.FC = () => {
             { id: 'finance', label: 'Laporan Keuangan', icon: Coins },
             { id: 'settings', label: 'Pengaturan Global', icon: Settings },
             { id: 'health', label: 'Kesehatan Sistem', icon: Activity },
-            { id: 'uat', label: 'Simulator UAT', icon: Zap },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -953,11 +952,11 @@ export const AdminManagement: React.FC = () => {
               </form>
             </div>
 
-            {/* WA Gateway simulation logs card */}
+            {/* WA Gateway logs card */}
             <div className="bg-white rounded-[2.5rem] border border-stone-100 shadow-xl p-8 space-y-6">
               <div className="flex items-center justify-between border-b border-stone-100 pb-4">
                 <div>
-                  <h3 className="text-xl font-bold text-stone-900 font-serif-display">Simulasi WA Gateway</h3>
+                  <h3 className="text-xl font-bold text-stone-900 font-serif-display">Log Notifikasi WhatsApp Gateway</h3>
                   <p className="text-[11px] text-stone-500 mt-1">Log pengiriman notifikasi otomatis real-time ke pelanggan & mitra.</p>
                 </div>
                 {whatsappLogs && whatsappLogs.length > 0 && (
@@ -993,7 +992,7 @@ export const AdminManagement: React.FC = () => {
                     <Clock className="w-10 h-10 mx-auto mb-3 opacity-20 animate-spin" style={{ animationDuration: '6s' }} />
                     <p className="text-xs font-medium italic">Belum ada aktivitas Gateway otomatis...</p>
                     <p className="text-[9px] text-stone-400 max-w-xs mx-auto mt-2 leading-relaxed">
-                      Lakukan pemesanan pijat atau ubah status pesanan menjadi 'Terapis Berjalan', 'Layanan Dimulai' / 'Selesai' untuk melihat simulasi WhatsApp di sini!
+                      Lakukan pemesanan pijat atau ubah status pesanan menjadi 'Terapis Berjalan', 'Layanan Dimulai' / 'Selesai' untuk melihat riwayat pesan WhatsApp otomatis di sini.
                     </p>
                   </div>
                 )}

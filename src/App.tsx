@@ -342,7 +342,7 @@ VITE_SUPABASE_ANON_KEY=Masukkan_Anon_Key_Supabase_Anda`}
               <div className="space-y-8">
                 <div className="bg-white rounded-2xl p-6 border border-stone-100 shadow-xs">
                   <h2 className="text-xl font-bold font-serif-display text-stone-900">
-                    Kalkulator & Simulasi Ongkos Transportasi Terapis
+                    Kalkulator Transparan Tarif Transportasi Terapis
                   </h2>
                   <p className="text-xs text-stone-500 mt-1">
                     Hitung estimasi transparan ongkos bensin motor terapis menuju alamat rumah, kos, hotel, atau apartemen Anda di Medan berdasarkan radius jarak lokasi Anda.
